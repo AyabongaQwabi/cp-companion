@@ -1,0 +1,184 @@
+{
+  "llms": {
+    "title": "ClinicPlus Companion",
+    "summary": "ClinicPlus Companion is a web-based employee roster, bulk occupational health appointment booking, compliance support, and spend-insight tool for existing ClinicPlus clients in South Africa.",
+    "primaryAudience": [
+      "Mining and industrial employers",
+      "Multi-site employers",
+      "Occupational health officers",
+      "ClinicPlus clients managing repeated employee medical bookings"
+    ],
+    "serviceAreas": [
+      "Hendrina, Mpumalanga",
+      "Churchill, South Africa",
+      "South African occupational health operations served through ClinicPlus"
+    ],
+    "topics": [
+      "occupational health appointment booking",
+      "employee roster management",
+      "bulk medical booking",
+      "mine medicals",
+      "employee medical recordkeeping",
+      "OHSA compliance support",
+      "ClinicPlus credit-based booking workflow"
+    ],
+    "trustSignals": [
+      "Existing ClinicPlus account login",
+      "South African POPIA-focused privacy policy",
+      "Published terms of service and refund policy",
+      "Yoco payment processing for credit purchases",
+      "Structured Organization, WebSite, SoftwareApplication, and FAQ schema"
+    ]
+  },
+  "robots": {
+    "disallow": [
+      "/admin",
+      "/api",
+      "/appointments",
+      "/availability",
+      "/book",
+      "/companies",
+      "/compliance",
+      "/finances",
+      "/insights",
+      "/login",
+      "/profile",
+      "/roster",
+      "/settings"
+    ],
+    "aiUserAgents": [
+      "GPTBot",
+      "ChatGPT-User",
+      "OAI-SearchBot",
+      "ClaudeBot",
+      "anthropic-ai",
+      "PerplexityBot",
+      "Google-Extended",
+      "Googlebot",
+      "Bingbot"
+    ]
+  },
+  "sitemap": {
+    "routes": [
+      {
+        "path": "/",
+        "title": "Bulk Occupational Health Booking for ClinicPlus Clients",
+        "description": "Saved employee roster and bulk medical booking for companies that book occupational medicals through ClinicPlus.",
+        "priority": 1,
+        "changeFrequency": "weekly"
+      },
+      {
+        "path": "/features",
+        "title": "Features",
+        "description": "Explore roster, bulk booking, spend insight, and reusable employee medical record workflows.",
+        "priority": 0.8,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/features/roster",
+        "title": "Employee Roster Management",
+        "description": "Save employee details, occupations, sites, and job spec files for repeat ClinicPlus bookings.",
+        "priority": 0.7,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/features/bulk-booking",
+        "title": "Bulk Appointment Booking",
+        "description": "Book occupational health appointments for multiple employees without retyping the same roster data.",
+        "priority": 0.7,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/features/insights",
+        "title": "Spend & Appointment Insights",
+        "description": "Review appointment history, most-booked services, and company spend in one dashboard.",
+        "priority": 0.7,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/solutions",
+        "title": "Solutions",
+        "description": "ClinicPlus Companion workflows for industrial employers, multi-site teams, and health officers.",
+        "priority": 0.8,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/solutions/mining-industrial",
+        "title": "Solutions for Mining & Industrial Employers",
+        "description": "Bulk booking support for mine medicals, inductions, exit medicals, and industrial employee screening.",
+        "priority": 0.7,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/solutions/multi-site-employers",
+        "title": "Solutions for Multi-Site Employers",
+        "description": "Organize employees by company, site, and occupation for repeat ClinicPlus medical bookings.",
+        "priority": 0.7,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/solutions/occupational-health-officers",
+        "title": "Solutions for Occupational Health Officers",
+        "description": "Keep roster data, booking history, job specs, and compliance reminders easier to manage.",
+        "priority": 0.7,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/resources",
+        "title": "Resources",
+        "description": "Guides and FAQs for occupational health booking, medical recordkeeping, and compliance workflows.",
+        "priority": 0.7,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/resources/guides/bulk-booking-occupational-health",
+        "title": "How to Bulk Book Occupational Health Appointments",
+        "description": "A practical guide to preparing employee data, selecting services, and booking occupational medicals in bulk.",
+        "priority": 0.6,
+        "changeFrequency": "yearly"
+      },
+      {
+        "path": "/resources/guides/employee-medical-recordkeeping",
+        "title": "Employee Medical Recordkeeping Guide",
+        "description": "How employers can organize employee medical booking records, job specs, and appointment history.",
+        "priority": 0.6,
+        "changeFrequency": "yearly"
+      },
+      {
+        "path": "/resources/guides/ohsa-compliance-checklist",
+        "title": "OHSA Compliance Checklist for Employee Medicals",
+        "description": "Checklist for organizing occupational medical workflows and supporting health and safety administration.",
+        "priority": 0.6,
+        "changeFrequency": "yearly"
+      },
+      {
+        "path": "/resources/faq",
+        "title": "Frequently Asked Questions",
+        "description": "Answers about ClinicPlus Companion roster data, bulk bookings, credits, clinics, and account access.",
+        "priority": 0.6,
+        "changeFrequency": "monthly"
+      },
+      {
+        "path": "/privacy",
+        "title": "Privacy Policy",
+        "description": "How ClinicPlus Companion collects, uses, and protects personal information under POPIA.",
+        "priority": 0.3,
+        "changeFrequency": "yearly"
+      },
+      {
+        "path": "/terms",
+        "title": "Terms of Service",
+        "description": "Terms governing use of ClinicPlus Companion by ClinicPlus clients.",
+        "priority": 0.3,
+        "changeFrequency": "yearly"
+      },
+      {
+        "path": "/refund-policy",
+        "title": "Refund Policy",
+        "description": "Refund policy for ClinicPlus Companion credit purchases and charged actions.",
+        "priority": 0.3,
+        "changeFrequency": "yearly"
+      }
+    ]
+  }
+}
