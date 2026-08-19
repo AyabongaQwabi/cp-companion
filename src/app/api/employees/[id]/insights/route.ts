@@ -38,6 +38,22 @@ function normalizeDate(value: unknown): string {
   return '';
 }
 
+function idNumberVariants(value: string): string[] {
+  const trimmed = value.trim();
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  const variants = new Set<string>();
+  if (trimmed) variants.add(trimmed);
+  if (digitsOnly) variants.add(digitsOnly);
+  if (digitsOnly.length === 13) {
+    variants.add(`${digitsOnly.slice(0, 6)} ${digitsOnly.slice(6, 10)} ${digitsOnly.slice(10)}`);
+  }
+  return [...variants];
+}
+
+function sameIdNumber(left: string, right: string): boolean {
+  return left.trim() === right.trim() || left.replace(/\D/g, '') === right.replace(/\D/g, '');
+}
+
 function humanServiceTitle(serviceId: string) {
   return MEDICAL_SERVICES[serviceId]?.title || serviceId;
 }
@@ -101,7 +117,7 @@ export async function GET(
     .find()
     .toArray();
 
-  if (!employee.idNumber || companyIds.length === 0) {
+  if (!employee.idNumber) {
     return NextResponse.json({
       employee: {
         id: employee._id?.toString(),
@@ -129,10 +145,7 @@ export async function GET(
       },
       suggestedNextBooking: {
         configured: validityPeriods.length > 0,
-        message:
-          companyIds.length === 0
-            ? 'Add this employee to a company before viewing company-scoped appointment history.'
-            : 'No appointment history yet.',
+        message: 'Add an ID or passport number before viewing appointment history.',
       },
       dataQuality: {
         idNumberValid: isValidSouthAfricanId(employee.idNumber),
@@ -143,9 +156,10 @@ export async function GET(
   }
 
   const prodDb = await getProductionDb();
+  const employeeIdNumberVariants = idNumberVariants(employee.idNumber);
   const query = {
-    'details.company.id': { $in: companyIds },
-    'details.employees.idNumber': employee.idNumber,
+    'usersWhoCanManage.id': userId,
+    'details.employees.idNumber': { $in: employeeIdNumberVariants },
   };
 
   const [liveAppointments, deletedAppointments] = await Promise.all([
@@ -156,7 +170,7 @@ export async function GET(
   const rows = [...liveAppointments, ...deletedAppointments]
     .flatMap((appointment) =>
       appointment.details.employees
-        .filter((appointmentEmployee) => appointmentEmployee.idNumber === employee.idNumber)
+        .filter((appointmentEmployee) => sameIdNumber(appointmentEmployee.idNumber, employee.idNumber))
         .map((appointmentEmployee) => ({
           appointment,
           employee: appointmentEmployee,
