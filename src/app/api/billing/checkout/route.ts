@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createCheckout, randomPaymentReference } from '@/lib/yoco';
 import { calculatePriceZAR, isValidBundle } from '@/lib/credit-bonus';
 import { getCompanionDb } from '@/lib/mongodb';
+import { SITE_URL } from '@/lib/seo';
 
 export async function POST(req: NextRequest) {
   const { userId, credits } = await req.json();
@@ -14,7 +15,14 @@ export async function POST(req: NextRequest) {
   }
 
   const priceZAR = calculatePriceZAR(credits);
-  const baseUrl = process.env.CP_COMPANION_BASE_URL || 'http://localhost:3000';
+  // Yoco rejects http:// redirect URLs outright when using a live secret key ("Checkouts with
+  // live keys can not have HTTP protocol"). CP_COMPANION_BASE_URL previously defaulted to
+  // http://localhost:3000, which broke checkout creation on any deployment where that env var
+  // wasn't explicitly set. SITE_URL (https://cpc.qwbi.lat) is already the canonical production
+  // domain used everywhere else in the app (metadata, JSON-LD) — use it as the fallback instead,
+  // so only genuine local dev (which should set CP_COMPANION_BASE_URL=http://localhost:3000
+  // itself, and typically runs with a test key anyway) ever sees an http:// redirect URL.
+  const baseUrl = process.env.CP_COMPANION_BASE_URL || SITE_URL;
   // Our own reference — Yoco doesn't expose a "get checkout by id" endpoint or append anything
   // to the redirect URLs, so this is what ties the webhook (which echoes metadata back) to the
   // pending checkout recorded below. Also used as the idempotency key: retrying this exact

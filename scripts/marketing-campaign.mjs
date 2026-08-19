@@ -6,28 +6,60 @@ import Mailjet from 'node-mailjet';
 import marketingConfig from '../config/marketing-campaigns.json' with { type: 'json' };
 import contactConfig from '../config/contact.json' with { type: 'json' };
 
+// Verbose by default — this script runs unattended (cron) as often as it runs by hand, so every
+// meaningful step logs what it's doing, what it found, and what it decided, not just the final
+// summary line. Timestamped so log lines can be correlated against cron scheduling / Mailjet's
+// own delivery logs when debugging why an email did or didn't go out.
+function log(...args) {
+  console.log(`[${new Date().toISOString()}]`, ...args);
+}
+
+log('Marketing campaign script starting', { argv: process.argv.slice(2) });
+
 const [, , command = 'dry-run', firstArg = 'clinicplus-companion-client-invite', secondArg] =
   process.argv;
 const campaignId = command === 'test-send' ? 'clinicplus-companion-client-invite' : firstArg;
+log('Parsed command', { command, campaignId, firstArg, secondArg });
 
+log('Loading .env.local');
+let envVarsLoaded = 0;
 for (const line of fs.readFileSync('.env.local', 'utf8').split(/\n/)) {
   const match = line.match(/^([^#=]+)=(.*)$/);
-  if (match && !process.env[match[1]]) process.env[match[1]] = match[2];
+  if (match && !process.env[match[1]]) {
+    process.env[match[1]] = match[2];
+    envVarsLoaded++;
+  }
 }
+log('Loaded env vars from .env.local', { count: envVarsLoaded });
 
 const campaign = marketingConfig.campaigns.find((item) => item.id === campaignId);
 if (!campaign || !campaign.enabled) {
+  log('ERROR: campaign not found or disabled', {
+    campaignId,
+    knownCampaignIds: marketingConfig.campaigns.map((c) => c.id),
+  });
   throw new Error(`Campaign not found or disabled: ${campaignId}`);
 }
+log('Loaded campaign', {
+  id: campaign.id,
+  name: campaign.name,
+  enabled: campaign.enabled,
+  baseUrl: campaign.baseUrl,
+  segment: campaign.segment,
+  sequenceSteps: campaign.sequence.map((s) => ({ step: s.step, delayDays: s.delayDays, subject: s.subject })),
+  maxEmailsPerRun: campaign.maxEmailsPerRun,
+});
 
 function eligibleUserFilter() {
   const excluded = campaign.segment.excludeEmailWords
     .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|');
-  return {
+  const filter = {
     role: campaign.segment.role,
     'details.email': { $type: 'string', $not: new RegExp(excluded, 'i') },
   };
+  log('Built eligible-user filter', { role: campaign.segment.role, excludeEmailWords: campaign.segment.excludeEmailWords });
+  return filter;
 }
 
 function displayName(user) {
@@ -156,55 +188,99 @@ function emailHtml(invite, email, options = {}) {
 async function sendEmail(invite, email, options = {}) {
   const apiKey = process.env.MAILJET_API_KEY;
   const apiSecret = process.env.MAILJET_API_SECRET;
-  if (!apiKey || !apiSecret) throw new Error('MAILJET_API_KEY / MAILJET_API_SECRET not set');
+  if (!apiKey || !apiSecret) {
+    log('ERROR: MAILJET_API_KEY / MAILJET_API_SECRET not set');
+    throw new Error('MAILJET_API_KEY / MAILJET_API_SECRET not set');
+  }
+  const subject = options.testMode ? `[TEST] ${email.subject}` : email.subject;
+  const customId = `${campaign.name}:${options.testMode ? 'Test' : email.step}`;
+  log(`Sending email to ${invite.userName} <${invite.userEmail}> — step ${email.step}: "${subject}"`);
   const mailjet = Mailjet.apiConnect(apiKey, apiSecret);
-  await mailjet.post('send', { version: 'v3.1' }).request({
-    Messages: [
-      {
-        From: { Email: contactConfig.supportEmail, Name: contactConfig.senderName },
-        To: [{ Email: invite.userEmail, Name: invite.userName }],
-        Subject: options.testMode ? `[TEST] ${email.subject}` : email.subject,
-        TextPart: email.preview,
-        HTMLPart: emailHtml(invite, email, options),
-        CustomID: `${campaign.name}:${options.testMode ? 'Test' : email.step}`,
-      },
-    ],
-  });
+  const start = Date.now();
+  try {
+    const result = await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [
+        {
+          From: { Email: contactConfig.supportEmail, Name: contactConfig.senderName },
+          To: [{ Email: invite.userEmail, Name: invite.userName }],
+          Subject: subject,
+          TextPart: email.preview,
+          HTMLPart: emailHtml(invite, email, options),
+          CustomID: customId,
+        },
+      ],
+    });
+    const status = result.body?.Messages?.[0]?.Status;
+    const messageId = result.body?.Messages?.[0]?.To?.[0]?.MessageID;
+    log(`Mailjet accepted send to ${invite.userName} <${invite.userEmail}> — status ${status}, messageId ${messageId}, ${Date.now() - start}ms`);
+  } catch (err) {
+    log(`ERROR: Mailjet send failed for ${invite.userName} <${invite.userEmail}> — ${err?.message}`);
+    throw err;
+  }
 }
 
+log('Connecting to MongoDB', {
+  selectedDb: process.env.SELECTED_DB || 'production',
+  companionDb: process.env.COMPANION_DB || 'cp_companion',
+});
+const dbConnectStart = Date.now();
 const client = await new MongoClient(process.env.DATABASE_URL).connect();
+log('MongoDB connected', { durationMs: Date.now() - dbConnectStart });
+
 try {
   const prod = client.db(process.env.SELECTED_DB || 'production');
   const companion = client.db(process.env.COMPANION_DB || 'cp_companion');
 
   if (command === 'dry-run') {
+    log('Running dry-run: listing eligible users, no emails sent, no DB writes');
+    const filter = eligibleUserFilter();
+    log('Querying production.users', { filter });
     const users = await prod
       .collection('users')
-      .find(eligibleUserFilter())
+      .find(filter)
       .project({ id: 1, role: 1, 'details.name': 1, 'details.surname': 1, 'details.email': 1 })
       .sort({ 'details.email': 1 })
       .toArray();
-    console.log(JSON.stringify({ campaignId, eligible: users.length, users: users.map((user) => ({ id: user.id, name: displayName(user), email: user.details.email, role: user.role })) }, null, 2));
+    log('Query complete', { eligibleCount: users.length });
+    const summary = { campaignId, eligible: users.length, users: users.map((user) => ({ id: user.id, name: displayName(user), email: user.details.email, role: user.role })) };
+    log('Dry-run result', { eligible: summary.eligible });
+    console.log(JSON.stringify(summary, null, 2));
+
   } else if (command === 'test-send') {
     const testEmail = firstArg || 'aya@qwabi.co.za';
     const step = Number(secondArg ?? 0);
+    log(`Running test-send to ${testEmail}, step ${step}`);
     const email = campaign.sequence.find((item) => item.step === step);
-    if (!email) throw new Error(`No campaign email found for step ${step}`);
+    if (!email) {
+      log(`ERROR: no campaign email found for step ${step} (known steps: ${campaign.sequence.map((s) => s.step).join(', ')})`);
+      throw new Error(`No campaign email found for step ${step}`);
+    }
+    log(`Found sequence step ${email.step}: "${email.subject}"`);
     const invite = {
       userEmail: testEmail,
       userName: 'Aya Qwabi',
       token: 'test-preview',
     };
     await sendEmail(invite, email, { testMode: true });
+    log(`test-send complete: sent to ${testEmail}`);
     console.log(JSON.stringify({ campaignId, sent: 1, testEmail, step, subject: `[TEST] ${email.subject}` }, null, 2));
+
   } else if (command === 'enroll') {
-    const users = await prod.collection('users').find(eligibleUserFilter()).project({ id: 1, role: 1, details: 1 }).toArray();
+    log('Running enroll: upserting emailCampaignInvites for every eligible user');
+    const filter = eligibleUserFilter();
+    log('Querying production.users', { filter });
+    const users = await prod.collection('users').find(filter).project({ id: 1, role: 1, details: 1 }).toArray();
+    log('Query complete', { eligibleCount: users.length });
+
+    log('Ensuring emailCampaignInvites indexes exist');
+    await companion.collection('emailCampaignInvites').createIndex({ campaignId: 1, userId: 1 }, { unique: true });
+    await companion.collection('emailCampaignInvites').createIndex({ token: 1 }, { unique: true });
+    log('Indexes ready');
+
     let enrolled = 0;
     let existing = 0;
     const now = new Date();
-    await companion.collection('emailCampaignInvites').createIndex({ campaignId: 1, userId: 1 }, { unique: true });
-    await companion.collection('emailCampaignInvites').createIndex({ token: 1 }, { unique: true });
-    for (const user of users) {
+    for (const [i, user] of users.entries()) {
       const result = await companion.collection('emailCampaignInvites').updateOne(
         { campaignId, userId: user.id },
         {
@@ -223,26 +299,48 @@ try {
         },
         { upsert: true }
       );
-      if (result.upsertedCount) enrolled++;
-      else existing++;
+      const name = displayName(user);
+      if (result.upsertedCount) {
+        enrolled++;
+        log(`[${i + 1}/${users.length}] Enrolled ${name} <${user.details.email}>`);
+      } else {
+        existing++;
+        log(`[${i + 1}/${users.length}] Already enrolled, skipped: ${name} <${user.details.email}>`);
+      }
     }
+    log('enroll complete', { eligible: users.length, enrolled, existing });
     console.log(JSON.stringify({ campaignId, eligible: users.length, enrolled, existing }, null, 2));
+
   } else if (command === 'send-due') {
+    log('Running send-due: sending the next queued email to every due, still-eligible invite');
     const now = new Date();
+    const dueFilter = { campaignId, nextStep: { $lt: campaign.sequence.length }, nextEmailDueAt: { $lte: now }, unsubscribedAt: { $exists: false } };
+    log('Querying emailCampaignInvites for due invites', { filter: dueFilter, limit: campaign.maxEmailsPerRun, now: now.toISOString() });
     const invites = await companion
       .collection('emailCampaignInvites')
-      .find({ campaignId, nextStep: { $lt: campaign.sequence.length }, nextEmailDueAt: { $lte: now }, unsubscribedAt: { $exists: false } })
+      .find(dueFilter)
       .sort({ nextEmailDueAt: 1 })
       .limit(campaign.maxEmailsPerRun)
       .toArray();
+    log('Query complete', { dueCount: invites.length });
+
     let sent = 0;
-    for (const invite of invites) {
+    let skippedIneligible = 0;
+    let skippedNoStep = 0;
+    for (const [i, invite] of invites.entries()) {
+      const progress = `${i + 1}/${invites.length}`;
       const email = campaign.sequence.find((item) => item.step === invite.nextStep);
-      if (!email) continue;
+      if (!email) {
+        log(`[${progress}] Skipping ${invite.userName} <${invite.userEmail}>: no sequence step matches nextStep ${invite.nextStep} (sequence may have shrunk)`);
+        skippedNoStep++;
+        continue;
+      }
+      log(`[${progress}] Checking eligibility for ${invite.userName} <${invite.userEmail}> — step ${email.step}: "${email.subject}"`);
       const stillEligible = await prod.collection('users').findOne({
         $and: [eligibleUserFilter(), { id: invite.userId, 'details.email': invite.userEmail }],
       });
       if (!stillEligible) {
+        log(`[${progress}] ${invite.userName} <${invite.userEmail}> no longer eligible — marking unsubscribed/completed, skipping send`);
         await companion.collection('emailCampaignInvites').updateOne(
           { _id: invite._id },
           {
@@ -250,6 +348,7 @@ try {
             $unset: { nextEmailDueAt: '' },
           }
         );
+        skippedIneligible++;
         continue;
       }
       await sendEmail(invite, email);
@@ -267,10 +366,19 @@ try {
       );
       sent++;
     }
+    log('send-due complete', { processed: invites.length, sent, skippedIneligible, skippedNoStep });
     console.log(JSON.stringify({ campaignId, processed: invites.length, sent }, null, 2));
+
   } else {
+    log('ERROR: unknown command', { command });
     throw new Error('Use one of: dry-run, test-send, enroll, send-due');
   }
+} catch (err) {
+  log('ERROR: script failed', { command, error: err?.message, stack: err?.stack });
+  throw err;
 } finally {
+  log('Closing MongoDB connection');
   await client.close();
+
+  log('Done');
 }
