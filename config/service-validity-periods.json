@@ -1,0 +1,27 @@
+[
+  {
+    "serviceId": "mine-medical-with-induction",
+    "validityMonths": 6,
+    "isDraft": false
+  },
+  {
+    "serviceId": "mine-medical-no-induction",
+    "validityMonths": 6,
+    "isDraft": false
+  },
+  {
+    "serviceId": "black-wattle-atoll-medical",
+    "validityMonths": 6,
+    "isDraft": false
+  },
+  {
+    "serviceId": "power-construction-other-medical",
+    "validityMonths": 6,
+    "isDraft": false
+  },
+  {
+    "serviceId": "full-exit-medical",
+    "validityMonths": 6,
+    "isDraft": false
+  }
+]

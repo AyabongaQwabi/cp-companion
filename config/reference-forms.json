@@ -1,0 +1,14 @@
+{
+  "baseUrl": "https://clinicplusbooking.co.za/forms/",
+  "forms": [
+    { "label": "Annexure 3 - Medical Certificate of Fitness.pdf", "file": "Annexure 3 - Medical Certificate of Fitness.pdf" },
+    { "label": "Man Job Spec - NEW.pdf", "file": "Man Job Spec - NEW.pdf" },
+    {
+      "label": "Man Job Spec for Working at Heights and Confined Spaces.xlsx",
+      "file": "Man Job Spec for Working at Heights and Confined Spaces.xlsx"
+    },
+    { "label": "Non-disclosure agreement 2023.doc", "file": "Non-disclosure agreement 2023.doc" },
+    { "label": "Record of Hazardous Work DMR.doc", "file": "drm.docx" },
+    { "label": "Training Banking Details Confirmation.pdf", "file": "Training Banking Details Confirmation.pdf" }
+  ]
+}

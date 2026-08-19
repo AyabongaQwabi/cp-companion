@@ -1,0 +1,143 @@
+{
+  "roster": {
+    "title": "Employee Roster",
+    "description": "Keep reusable employee records, sites, groups, job specs, and compliance cues ready before you build appointments.",
+    "helpers": {
+      "employees": "Search, filter, import, or add employees here. Select multiple employees when you need to apply a site in one action.",
+      "sites": "Sites help you book and report by location. Add each recurring workplace once, then assign employees to it."
+    }
+  },
+  "groups": {
+    "title": "Groups",
+    "description": "Create reusable teams, departments, shifts, or crews so bulk booking starts with the right people and default services.",
+    "helpers": {
+      "groups": "Choose a group to manage members and default services. A group can be as broad as a department or as specific as a shift.",
+      "members": "Members added here can be selected together when building an appointment."
+    }
+  },
+  "site": {
+    "title": "Site",
+    "description": "Review which roster employees are assigned to this site and add missing people from your roster.",
+    "helpers": {
+      "employees": "Removing someone from a site only removes this site assignment; it does not delete the employee from your roster.",
+      "addEmployees": "Use this when a site has new employees or when imported roster records still need a location."
+    }
+  },
+  "companies": {
+    "title": "Companies",
+    "description": "Manage the companies you can book for, edit their details, and keep company-specific employee lists tidy.",
+    "helpers": {
+      "create": "Use the registered legal details where you have them. Only the company name is required to get started.",
+      "list": "Open a company to edit billing details or connect roster employees to that company."
+    }
+  },
+  "companyDetail": {
+    "title": "Company",
+    "description": "Update company details and connect roster employees who belong to this company.",
+    "helpers": {
+      "details": "These fields update the company record used by ClinicPlus Companion. Save only when the billing or registration details are correct.",
+      "employees": "Company membership helps filter the roster during booking. It does not create or remove appointment records."
+    }
+  },
+  "book": {
+    "title": "Book from roster",
+    "description": "Build an appointment from saved employees, reuse job specs, check clinic capacity, and submit with the required NDA.",
+    "helpers": {
+      "referenceForms": "Download supporting ClinicPlus forms here before you submit the booking.",
+      "schedule": "Choose the clinic and date first so capacity checks can warn you before the appointment is submitted.",
+      "employees": "Add employees from the roster, then expand each person to confirm services, job spec files, Dover, and X-ray requirements."
+    }
+  },
+  "appointments": {
+    "title": "Appointments",
+    "description": "Find existing appointments, review their status, and open one when you need to edit, duplicate, message, or manage it.",
+    "helpers": {
+      "filters": "Use filters together to narrow the list by status, clinic, and date range.",
+      "table": "Appointment IDs open the full appointment record, including employees, files, messages, and management actions."
+    }
+  },
+  "appointmentDetail": {
+    "title": "Appointment",
+    "description": "Review the appointment, check submitted documents and employees, and use the action buttons for changes.",
+    "helpers": {
+      "details": "This summary mirrors the submitted booking details. Use edit when the clinic, date, or billing fields need to change.",
+      "employees": "Employee rows show the submitted services and files. Removing an employee updates this appointment only.",
+      "managers": "Users listed here can manage this appointment record."
+    }
+  },
+  "appointmentEdit": {
+    "title": "Edit appointment",
+    "description": "Adjust appointment details and manage employees while preserving the appointment record and audit trail.",
+    "helpers": {
+      "details": "Changing clinic or date re-checks blocked dates and daily clinic capacity before saving.",
+      "employees": "Add employees from the roster. To change an existing employee's details, update the roster entry and re-add them."
+    }
+  },
+  "availability": {
+    "title": "Availability Calendar",
+    "description": "Check clinic capacity by month before choosing an appointment date.",
+    "helpers": {
+      "controls": "Switch clinics or months to compare capacity before starting a booking.",
+      "legend": "Green has plenty of capacity, amber is close to full, and red is already fully booked."
+    }
+  },
+  "compliance": {
+    "title": "Compliance",
+    "description": "Track medical and service expiry status per employee so repeat bookings are easier to plan.",
+    "helpers": {
+      "filters": "Filter by status or company to focus on the employees that need action first.",
+      "table": "Draft data means the expiry rule is not confirmed yet; treat those rows as planning signals, not final compliance decisions."
+    }
+  },
+  "insights": {
+    "title": "Insights",
+    "description": "Turn appointment history into booking, revenue, lifecycle, service, and company-level patterns.",
+    "helpers": {
+      "gate": "Opening insights may use credits because it calculates a richer report from your appointment history.",
+      "exports": "Export CSV for spreadsheet analysis or PDF for a quick shareable snapshot."
+    }
+  },
+  "finances": {
+    "title": "Finances",
+    "description": "Buy credits, monitor your balance, and review the ledger of purchases and charged actions.",
+    "helpers": {
+      "balance": "Credits are consumed by paid workflow actions. Top up before large imports, bulk updates, or report exports.",
+      "transactions": "Use the filters to separate purchases from action charges when reconciling your account."
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "description": "Manage your account details, password, account ID, and deletion request options.",
+    "helpers": {
+      "stats": "These totals summarize your current ClinicPlus Companion footprint.",
+      "security": "Use a unique password and keep your account email current so support and notifications reach the right person."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Control account-level preferences, product feedback, audit visibility, and high-risk bulk actions.",
+    "helpers": {
+      "spending": "This setting changes whether ClinicPlus Companion asks before running priced actions; it never changes the credit cost.",
+      "danger": "Bulk deletion actions require explicit confirmation and should be used only when you are clearing real working data."
+    }
+  },
+  "featureRequest": {
+    "title": "Suggest Feature",
+    "description": "Send ClinicPlus Companion feature ideas straight to the product team with enough context to evaluate the request.",
+    "helpers": {
+      "form": "Describe the workflow or problem first, then explain who it helps or how much time it saves."
+    }
+  },
+  "serviceValidity": {
+    "title": "Service Validity Periods",
+    "description": "Configure how long medical services remain valid before compliance tracking flags them for renewal.",
+    "helpers": {
+      "global": "This is global superadmin configuration shared across companies. Draft rows should be confirmed before teams rely on them.",
+      "form": "Add or update one service at a time. A service with no row is ignored by expiry tracking."
+    }
+  },
+  "forbidden": {
+    "title": "Forbidden",
+    "description": "This page is restricted to superadmins."
+  }
+}

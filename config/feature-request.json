@@ -1,0 +1,42 @@
+{
+  "database": {
+    "collection": "featureRequests",
+    "initialStatus": "new"
+  },
+  "settingsCard": {
+    "sectionTitle": "Product feedback",
+    "title": "Suggest a new feature",
+    "description": "Tell us what would make ClinicPlus Companion more useful for your bookings, roster, or reporting workflow.",
+    "buttonLabel": "Suggest feature",
+    "href": "/settings/feature-request"
+  },
+  "form": {
+    "title": "New feature suggestion",
+    "helperText": "This will be saved to ClinicPlus Companion and emailed to Aya at Qwabi.",
+    "titleLabel": "Feature title",
+    "titlePlaceholder": "e.g. Bulk export appointment invoices",
+    "descriptionLabel": "What should it do?",
+    "descriptionPlaceholder": "Describe the workflow, report, automation, or improvement you need.",
+    "impactLabel": "Why would this help?",
+    "impactPlaceholder": "Optional: tell us who it helps, how often, or what time it saves.",
+    "submitLabel": "Submit suggestion",
+    "submittingLabel": "Submitting...",
+    "cancelLabel": "Cancel",
+    "genericError": "Could not submit your suggestion."
+  },
+  "success": {
+    "title": "Suggestion sent",
+    "description": "Thanks for sharing it. Your feature request has been saved and sent to Aya.",
+    "suggestAnotherLabel": "Suggest another",
+    "backToSettingsLabel": "Back to settings"
+  },
+  "email": {
+    "recipientEmail": "aya@qwabi.co.za",
+    "recipientName": "Aya",
+    "greetingName": "Aya",
+    "intro": "A ClinicPlus Companion user suggested a new feature.",
+    "subjectPrefix": "New ClinicPlus Companion feature suggestion:",
+    "teamName": "The ClinicPlus Companion Team",
+    "customId": "FeatureRequest"
+  }
+}

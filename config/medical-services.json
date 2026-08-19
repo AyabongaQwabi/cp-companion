@@ -1,0 +1,104 @@
+{
+  "doverPrice": 878.39,
+  "xraysPrice": 262.0,
+  "services": [
+    {
+      "id": "mine-medical-with-induction",
+      "title": "Mine medicals with General Mine Induction",
+      "price": 1104.23,
+      "showInfo": true,
+      "info": "Includes physical examination, BP, Height, Weight, Audio, Spiro, Vision, urine dipstick test, 6-in-1 urine drug test & induction. X-rays compulsory – select separately (to be paid in to Maxis bank account). Compulsory mines: Mzimkhulu, Rietvlei, Mavungwani, Valley View, Mgayo, Bultfontein."
+    },
+    {
+      "id": "mine-medical-no-induction",
+      "title": "Mine medicals with NO Induction",
+      "price": 783.27,
+      "showInfo": true,
+      "info": "Includes physical examination, BP, Height, Weight, Audio, Spiro, Vision, urine dipstick test, 6-in-1 urine drug test. X-rays compulsory – select separately (to be paid in to Maxis bank account)."
+    },
+    {
+      "id": "black-wattle-atoll-medical",
+      "title": "Medical for Black Wattle & Atoll",
+      "price": 686.78,
+      "showInfo": true,
+      "info": "Includes physical examination, BP, Height, Weight, Audio, Spiro, Vision, urine scree dipstick test, urine cannabis test. X-rays compulsory – select separately (to be paid in to Maxis bank account)."
+    },
+    {
+      "id": "power-construction-other-medical",
+      "title": "Medical examinations for Power stations, Construction and Other",
+      "price": 637.73,
+      "showInfo": true,
+      "info": "Includes physical examination, BP, Height, Weight, Audio, Spiro, Vision, Urine screening test. Drug test optional – select separately (either cannabis or 6-in-1 drug test). HGT (Sugar) test, optional – select separately. X-rays optional – select separately (to be paid in to Maxis bank account)."
+    },
+    {
+      "id": "6-in-1-drug-test",
+      "title": "6 in 1 Drug Test (includes cannabis)",
+      "price": 145.54,
+      "info": "Our 6-test panel drug test uses urine to check for the presence of drug abuse. In comparison to our 10-panel drug test, this test covers the most popular illicit drugs, also known as \"street drugs\" which are rarely prescribed."
+    },
+    {
+      "id": "cannabis",
+      "title": "Cannabis Urine Test",
+      "price": 49.06,
+      "info": "Cannabis drug testing describes various drug test methodologies for the use of cannabis in medicine, sport, and law. Cannabis use is highly detectable and can be detected by urinalysis, hair analysis, as well as saliva tests for days or weeks."
+    },
+    {
+      "id": "induction",
+      "title": "General Mine Induction Only",
+      "price": 320.97,
+      "showInfo": true,
+      "info": "Not compulsory for all companies"
+    },
+    {
+      "id": "pregnancy-test",
+      "title": "Pregnancy Screening Test",
+      "price": 51.26,
+      "info": "A pregnancy test is used to determine whether a woman is pregnant. The two primary methods are: 1 testing for human pregnancy hormone in blood or urine and 2 ultrasonography. Testing blood for hCG results in the earliest detection of pregnancy."
+    },
+    {
+      "id": "sugar-test",
+      "title": "Sugar Test",
+      "price": 50.69,
+      "showInfo": true,
+      "info": "(Compulsory for on road truck drivers) - Please select separately"
+    },
+    {
+      "id": "clearance",
+      "title": "Clearance",
+      "price": 275.12,
+      "info": "What is the creatinine clearance test? The creatinine clearance test is an older test used to check your kidney function. This test allows your healthcare provider to look at samples of your urine and blood to see how much of the waste product — creatinine — is filtered out by your kidneys"
+    },
+    {
+      "id": "hiv",
+      "title": "HIV",
+      "price": 153.81,
+      "info": "HIV tests are used to detect the presence of the human immunodeficiency virus, the virus that causes acquired immunodeficiency syndrome, in serum, saliva, or urine. Such tests may detect antibodies, antigens, or RNA. "
+    },
+    {
+      "id": "full-exit-medical",
+      "title": "Full Exit Medical (medical older than 6 months)",
+      "price": 637.74,
+      "showInfo": true,
+      "info": "Medicals older than 6 months. Xrays compulsory – select separately."
+    },
+    {
+      "id": "short-exit-medical",
+      "title": "Short Exit Medical (medical less than 6 months)",
+      "price": 347.19,
+      "showInfo": true,
+      "info": "Medicals less than 6 months. Xrays optional ."
+    },
+    {
+      "id": "covid-19-screen-questionnaire",
+      "title": "Covid-19 Questionnaire",
+      "price": 117.1,
+      "info": "This is the first COVID-19 antibody test that has been approved for use in South Africa. The specificity of this test is 100% and it has a sensitivity of 95.8% for samples collected 10 days or more after the onset of symptoms or a positive PCR (nasal test) result (McAdam, 2020)."
+    },
+    {
+      "id": "other",
+      "title": "Other",
+      "price": 106.0,
+      "info": "Other"
+    }
+  ]
+}
