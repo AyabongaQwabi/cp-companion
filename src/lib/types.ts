@@ -221,6 +221,32 @@ export interface FeatureRequest {
   createdAt: Date;
 }
 
+// cp_companion.emailCampaignInvites — invite/enrollment state for lifecycle marketing campaigns.
+// The actual email copy, timing, audience rules, and bonus amount live in
+// config/marketing-campaigns.json so campaign strategy changes are reviewed as config changes.
+export interface EmailCampaignInvite {
+  _id?: unknown;
+  campaignId: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  token: string;
+  firstLoginBonusCredits: number;
+  enrolledAt: Date;
+  clickedAt?: Date;
+  lastClickedAt?: Date;
+  bonusClaimedAt?: Date;
+  nextStep: number;
+  nextEmailDueAt?: Date;
+  completedAt?: Date;
+  unsubscribedAt?: Date;
+  sent: {
+    step: number;
+    subject: string;
+    sentAt: Date;
+  }[];
+}
+
 // cp_companion.recurringBookingFlags — per-employee (optionally per-service) repeat-booking
 // reminder. Never auto-creates an appointment; the UI only ever surfaces a prompt from this data,
 // still requiring the full human confirm/NDA/job-spec flow to actually book. One row per

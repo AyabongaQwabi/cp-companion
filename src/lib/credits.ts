@@ -1,6 +1,7 @@
 import { getCompanionDb } from './mongodb';
 import actionPricingConfig from '../../config/action-pricing.json';
 import creditPurchasingConfig from '../../config/credit-purchasing.json';
+import { resolveCampaignInviteBonus } from './email-campaigns';
 import type { ActionPricing, CreditTransaction, CreditWallet } from './types';
 
 interface ActionPricingSeed {
@@ -63,7 +64,8 @@ export async function getOrCreateWallet(userId: string): Promise<CreditWallet> {
  */
 export async function grantSignupBonusIfFirstLogin(
   productionUserId: string,
-  companyIdAtSignup?: string
+  companyIdAtSignup?: string,
+  inviteToken?: string
 ): Promise<boolean> {
   const db = await getCompanionDb();
   const companionUsers = db.collection('companionUsers');
@@ -72,12 +74,16 @@ export async function grantSignupBonusIfFirstLogin(
   if (already) return false;
 
   const now = new Date();
+  const campaignInvite = await resolveCampaignInviteBonus(db, productionUserId, inviteToken);
+  const bonusCredits = campaignInvite?.firstLoginBonusCredits || SIGNUP_BONUS_CREDITS;
   try {
     await companionUsers.insertOne({
       productionUserId,
       firstLoginAt: now,
       signupBonusGrantedAt: now,
+      signupBonusCredits: bonusCredits,
       companyIdAtSignup,
+      campaignIdAtSignup: campaignInvite?.campaignId,
     });
   } catch {
     // Unique-constraint-style race (two simultaneous first logins) — whichever insert lost,
@@ -85,7 +91,17 @@ export async function grantSignupBonusIfFirstLogin(
     return false;
   }
 
-  await creditWallet(productionUserId, SIGNUP_BONUS_CREDITS, 'signup-bonus');
+  await creditWallet(
+    productionUserId,
+    bonusCredits,
+    campaignInvite ? `signup-bonus:${campaignInvite.campaignId}` : 'signup-bonus'
+  );
+  if (campaignInvite) {
+    await db.collection('emailCampaignInvites').updateOne(
+      { _id: campaignInvite._id, bonusClaimedAt: { $exists: false } },
+      { $set: { bonusClaimedAt: now } }
+    );
+  }
   return true;
 }
 

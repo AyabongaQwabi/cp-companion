@@ -1,0 +1,77 @@
+{
+  "campaigns": [
+    {
+      "id": "clinicplus-companion-client-invite",
+      "name": "ClinicPlus Companion client invitation",
+      "enabled": true,
+      "baseUrl": "https://cpc.qwbi.lat",
+      "logoUrl": "https://cpc.qwbi.lat/_next/image?url=%2Flogo-wide.png&w=2048&q=75",
+      "firstLoginBonusCredits": 100,
+      "fallbackSignupBonusCredits": 50,
+      "maxEmailsPerRun": 50,
+      "segment": {
+        "role": "client",
+        "excludeEmailWords": ["tecla", "clinic"]
+      },
+      "sequence": [
+        {
+          "step": 0,
+          "delayDays": 0,
+          "subject": "Your ClinicPlus Companion access is ready",
+          "preview": "Use your existing ClinicPlus login and claim 100 free credits when you try the new booking companion.",
+          "headline": "Book repeat medicals without retyping your roster",
+          "eyebrow": "New for ClinicPlus clients",
+          "intro": "We built ClinicPlus Companion for teams who book the same employees again and again.",
+          "body": [
+            "Instead of typing employee details from scratch each time, you can save a roster once, reuse job specs, select services in bulk, and create a real ClinicPlus appointment from one dashboard.",
+            "Because you are an existing ClinicPlus client, your invitation includes 100 free credits when you log in from this email for the first time."
+          ],
+          "bullets": [
+            "Save employee names, ID/passport numbers, occupations, sites, and job specs",
+            "Build appointments from saved employees instead of spreadsheets",
+            "Track credits, bookings, and basic appointment insights"
+          ],
+          "cta": "Claim 100 Free Credits"
+        },
+        {
+          "step": 1,
+          "delayDays": 2,
+          "subject": "The part that saves the most time",
+          "preview": "Your roster becomes reusable: employees, services, sites, and job specs stay ready for the next booking.",
+          "headline": "Your next bulk booking can start from a saved roster",
+          "eyebrow": "Companion workflow",
+          "intro": "The biggest time drain in repeat medical bookings is not choosing the clinic. It is rebuilding the same employee list.",
+          "body": [
+            "ClinicPlus Companion keeps the employee details you need for recurring occupational health appointments in one place, then lets you choose the people you need when a new booking comes up.",
+            "It is especially useful for mine medicals, inductions, exit medicals, and teams that move between sites."
+          ],
+          "bullets": [
+            "Group employees by crew, department, site, or occupation",
+            "Reuse uploaded job spec files where they already exist",
+            "See the appointment record after it is created in ClinicPlus"
+          ],
+          "cta": "Try Companion With 100 Credits"
+        },
+        {
+          "step": 2,
+          "delayDays": 5,
+          "subject": "Last reminder: your 100 credits are waiting",
+          "preview": "Use the invite link before your team’s next booking cycle and see whether Companion fits your workflow.",
+          "headline": "Make the next booking cycle lighter",
+          "eyebrow": "Final invitation reminder",
+          "intro": "A saved roster is easiest to set up before the next urgent booking request lands.",
+          "body": [
+            "Log in with your existing ClinicPlus account, claim the 100-credit invite bonus, and add a few employees to see how the flow feels.",
+            "If Companion saves your team even one round of repeated typing, it has already done its first job."
+          ],
+          "bullets": [
+            "No new ClinicPlus account needed",
+            "Credits are visible before priced actions run",
+            "You stay in control of what gets submitted"
+          ],
+          "cta": "Use My Invite"
+        }
+      ]
+    }
+  ]
+}

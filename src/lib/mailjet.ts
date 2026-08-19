@@ -191,3 +191,109 @@ export async function sendFeatureRequestEmail(params: {
     customId: emailConfig.customId,
   });
 }
+
+export async function sendMarketingCampaignEmail(params: {
+  to: EmailRecipient;
+  logoUrl: string;
+  inviteUrl: string;
+  unsubscribeUrl: string;
+  recipientName: string;
+  campaignName: string;
+  email: {
+    step: number;
+    subject: string;
+    preview: string;
+    headline: string;
+    eyebrow: string;
+    intro: string;
+    body: string[];
+    bullets: string[];
+    cta: string;
+  };
+}) {
+  const recipientName = escapeHtml(params.recipientName.split(' ')[0] || params.recipientName);
+  const body = params.email.body
+    .map((paragraph) => `<p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">${escapeHtml(paragraph)}</p>`)
+    .join('');
+  const bullets = params.email.bullets
+    .map(
+      (item) =>
+        `<li style="margin:0 0 10px;color:#2b2b2b;line-height:1.5;"><span style="color:#b8892f;font-weight:700;">•</span> ${escapeHtml(item)}</li>`
+    )
+    .join('');
+
+  const html = `<!doctype html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>${escapeHtml(params.email.subject)}</title>
+    </head>
+    <body style="margin:0;padding:0;background:#0f0f10;font-family:Arial,Helvetica,sans-serif;">
+      <div style="display:none;max-height:0;overflow:hidden;color:transparent;opacity:0;">
+        ${escapeHtml(params.email.preview)}
+      </div>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f0f10;padding:28px 12px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #d6b25e;">
+              <tr>
+                <td style="background:#111111;padding:26px 28px;text-align:center;">
+                  <img src="${params.logoUrl}" width="220" alt="ClinicPlus Companion" style="display:inline-block;max-width:220px;width:70%;height:auto;" />
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:34px 30px 8px;">
+                  <p style="margin:0 0 12px;color:#b8892f;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">
+                    ${escapeHtml(params.email.eyebrow)}
+                  </p>
+                  <h1 style="margin:0 0 18px;color:#111111;font-size:28px;line-height:1.18;font-weight:700;">
+                    ${escapeHtml(params.email.headline)}
+                  </h1>
+                  <p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">Hi ${recipientName},</p>
+                  <p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">${escapeHtml(params.email.intro)}</p>
+                  ${body}
+                  <ul style="margin:2px 0 22px;padding:0;list-style:none;">
+                    ${bullets}
+                  </ul>
+                  <table role="presentation" cellspacing="0" cellpadding="0" style="margin:26px 0;">
+                    <tr>
+                      <td style="border-radius:999px;background:#c41230;">
+                        <a href="${params.inviteUrl}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;border:1px solid #d6b25e;">
+                          ${escapeHtml(params.email.cta)}
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin:0 0 16px;color:#666666;font-size:13px;line-height:1.6;">
+                    Use your existing ClinicPlus login. The 100-credit invite bonus is applied on first login when you enter through this email button.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:22px 30px 30px;background:#fafafa;border-top:1px solid #eeeeee;">
+                  <p style="margin:0;color:#555555;font-size:13px;line-height:1.6;">
+                    Thanks,<br />
+                    The ClinicPlus Team
+                  </p>
+                  <p style="margin:14px 0 0;color:#777777;font-size:12px;line-height:1.5;">
+                    Prefer not to receive this invite sequence?
+                    <a href="${params.unsubscribeUrl}" style="color:#c41230;text-decoration:underline;">Unsubscribe here</a>.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>`;
+
+  await sendMailjetEmail({
+    from: FROM,
+    to: [params.to],
+    subject: params.email.subject,
+    html,
+    customId: `${params.campaignName}:${params.email.step}`,
+  });
+}

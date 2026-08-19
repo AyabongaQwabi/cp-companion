@@ -4,7 +4,7 @@ import { grantSignupBonusIfFirstLogin, getOrCreateWallet } from '@/lib/credits';
 import { seedMissingServiceValidityPeriods } from '@/lib/compliance';
 
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json();
+  const { email, password, inviteToken } = await req.json();
   if (!email || !password) {
     return NextResponse.json({ error: 'email and password required' }, { status: 400 });
   }
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const companies = companiesForUser(user);
 
   await seedMissingServiceValidityPeriods();
-  await grantSignupBonusIfFirstLogin(user.id, companies[0]?.id);
+  await grantSignupBonusIfFirstLogin(user.id, companies[0]?.id, inviteToken);
   const wallet = await getOrCreateWallet(user.id);
 
   return NextResponse.json({
