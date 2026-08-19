@@ -1,6 +1,9 @@
 import Mailjet from 'node-mailjet';
 import contactConfig from '../../config/contact.json';
 import featureRequestConfig from '../../config/feature-request.json';
+import { SITE_URL } from './seo';
+
+const LOGO_URL = `${SITE_URL}/_next/image?url=%2Flogo-wide.png&w=2048&q=75`;
 
 /**
  * Mirrors clinicplus-server-latest-stable-version/lib/externalApi/mailjet.js and the two
@@ -59,17 +62,137 @@ function escapeHtml(value: string) {
     .replaceAll("'", '&#39;');
 }
 
+/**
+ * Shared premium shell for every transactional email — same visual language as
+ * sendMarketingCampaignEmail's template (warm off-white canvas, gold eyebrow badge, red gradient
+ * CTA, subtle card shadow) so a recipient never sees a plain-text-looking email from this app.
+ * `badge` is the small pill above the headline (e.g. "Appointment confirmed"); `rows` renders an
+ * optional key/value summary table (e.g. Appointment ID, Employee, Expiry date).
+ */
+function renderEmailShell(params: {
+  subject: string;
+  badge: string;
+  eyebrow: string;
+  headline: string;
+  greeting: string;
+  paragraphs: string[];
+  rows?: { label: string; value: string }[];
+  cta?: { label: string; url: string };
+  signOff?: string;
+}) {
+  const paragraphs = params.paragraphs
+    .map(
+      (p) =>
+        `<p style="margin:0 0 16px;color:#3f3a33;line-height:1.7;font-size:15px;">${p}</p>`
+    )
+    .join('');
+
+  const rows = (params.rows || [])
+    .map(
+      (row) => `
+        <tr>
+          <td style="padding:10px 14px;color:#8a857a;font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #f0ead9;white-space:nowrap;">${escapeHtml(row.label)}</td>
+          <td style="padding:10px 14px;color:#1c1a16;font-size:14px;font-weight:600;border-bottom:1px solid #f0ead9;text-align:right;">${row.value}</td>
+        </tr>`
+    )
+    .join('');
+
+  const rowsTable = rows
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:6px 0 22px;background:#fbf8f2;border:1px solid #ecdfc2;border-radius:12px;overflow:hidden;">${rows}</table>`
+    : '';
+
+  const cta = params.cta
+    ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:8px auto 8px;">
+        <tr>
+          <td style="border-radius:999px;background:linear-gradient(180deg,#d1264a,#b8102f);box-shadow:0 6px 16px rgba(196,18,48,0.25);">
+            <a href="${params.cta.url}" style="display:inline-block;padding:14px 26px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14.5px;border-radius:999px;">
+              ${escapeHtml(params.cta.label)}
+            </a>
+          </td>
+        </tr>
+      </table>`
+    : '';
+
+  return `<!doctype html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>${escapeHtml(params.subject)}</title>
+    </head>
+    <body style="margin:0;padding:0;background:#f4f1ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,Helvetica,sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f1ea;padding:32px 12px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(20,16,8,0.06);border:1px solid #ece6d8;">
+              <tr>
+                <td style="padding:30px 32px 22px;text-align:center;background:#ffffff;border-bottom:1px solid #f0ead9;">
+                  <img src="${LOGO_URL}" width="200" alt="ClinicPlus Booking Companion" style="display:inline-block;max-width:200px;width:60%;height:auto;" />
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:8px 32px 0;text-align:center;">
+                  <span style="display:inline-block;margin-top:20px;padding:6px 14px;border-radius:999px;background:#fbf3e0;border:1px solid #e9d6a3;color:#8a6a1f;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">
+                    ${escapeHtml(params.badge)}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:22px 32px 4px;">
+                  <p style="margin:0 0 10px;color:#c41230;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-align:center;">
+                    ${escapeHtml(params.eyebrow)}
+                  </p>
+                  <h1 style="margin:0 0 20px;color:#1c1a16;font-size:24px;line-height:1.3;font-weight:700;text-align:center;">
+                    ${escapeHtml(params.headline)}
+                  </h1>
+                  <p style="margin:0 0 16px;color:#3f3a33;line-height:1.7;font-size:15px;">${escapeHtml(params.greeting)}</p>
+                  ${paragraphs}
+                  ${rowsTable}
+                  ${cta}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:8px 32px 30px;">
+                  <p style="margin:0 0 4px;color:#4a453c;font-size:13.5px;line-height:1.6;">
+                    ${escapeHtml(params.signOff || 'Thanks,')}<br />
+                    <strong style="color:#1c1a16;">The ClinicPlus Booking Companion Team</strong>
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:18px 32px 26px;background:#faf8f3;border-top:1px solid #f0ead9;">
+                  <p style="margin:0;color:#8a857a;font-size:11.5px;line-height:1.6;">
+                    ClinicPlus Booking Companion is a standalone product built and operated by
+                    Namoota Technology (Pty) Ltd for ClinicPlus clients.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>`;
+}
+
 export async function sendNewAppointmentEmail(
   user: { details: { name: string; surname: string; email: string } },
   appointment: { id: string }
 ) {
   const websiteUrl = process.env.CLINICPLUS_WEBSITE_URL;
-  const html = `<p>Hi there,</p>
-  <p>You have succesfully created a new appointment on the ClinicPplus system.</p>
-  <p>Please click the link below to view it</p>
-  <p><a href="${websiteUrl}/appointment/${appointment.id}">${websiteUrl}/appointment/${appointment.id}</a></p>
-  <p>Thanks,</p>
-  <p>The ClinicPlus Booking Companion Team</p>`;
+  const appointmentUrl = `${websiteUrl}/appointment/${appointment.id}`;
+  const html = renderEmailShell({
+    subject: 'Appointment Created',
+    badge: 'Booking confirmed',
+    eyebrow: 'New appointment',
+    headline: 'Your appointment has been created',
+    greeting: `Hi ${escapeHtml(user.details.name)},`,
+    paragraphs: [
+      'Your appointment has been successfully created on the ClinicPlus system. You can view its full details, tracking, and status at any time using the link below.',
+    ],
+    rows: [{ label: 'Appointment ID', value: escapeHtml(appointment.id) }],
+    cta: { label: 'View appointment', url: appointmentUrl },
+  });
   await sendMailjetEmail({
     from: FROM,
     to: [{ Email: user.details.email, Name: `${user.details.name} ${user.details.surname}` }],
@@ -85,13 +208,20 @@ export async function sendNewAppointmentEmailInternal(appointment: { id: string 
   if (!notifEmail) {
     throw new Error('CLINICPLUS_NOTIF_EMAIL not set');
   }
-  const html = `<p>Hi ClinicPlus,</p>
-  <p>A new appointment has been placed on the system. Appointment ID: ${appointment.id}</p>
-  <p>Please click the link below to view it</p>
-  <p><a href="${adminUrl}/appointment/${appointment.id}">${adminUrl}/appointment/${appointment.id}</a></p>
-  <br/>
-  <p>Thanks,</p>
-  <p><small>Tecla Digital &amp; Midas Touch Technologies</small></p>`;
+  const appointmentUrl = `${adminUrl}/appointment/${appointment.id}`;
+  const html = renderEmailShell({
+    subject: 'Appointment Created',
+    badge: 'Internal notification',
+    eyebrow: 'New appointment',
+    headline: 'A new appointment has been placed',
+    greeting: 'Hi ClinicPlus,',
+    paragraphs: [
+      'A new appointment has been placed on the system. Review it using the link below.',
+    ],
+    rows: [{ label: 'Appointment ID', value: escapeHtml(appointment.id) }],
+    cta: { label: 'View appointment', url: appointmentUrl },
+    signOff: 'Thanks,',
+  });
   await sendMailjetEmail({
     from: FROM_IT,
     to: [{ Email: notifEmail, Name: 'Bookings Department' }],
@@ -105,12 +235,22 @@ export async function sendComplianceAlertEmail(
   user: { details: { name: string; surname: string; email: string } },
   entry: { employeeName: string; serviceId: string; expiryDate: string }
 ) {
-  const html = `<p>Hi ${escapeHtml(user.details.name)},</p>
-  <p>An employee on your ClinicPlus Companion roster has a medical/service due for renewal soon.</p>
-  <p><strong>${escapeHtml(entry.employeeName)}</strong> — ${escapeHtml(entry.serviceId)} expires on ${escapeHtml(entry.expiryDate)}.</p>
-  <p>Log in to ClinicPlus Companion to view compliance status and book a renewal appointment.</p>
-  <p>Thanks,</p>
-  <p>The ClinicPlus Booking Companion Team</p>`;
+  const html = renderEmailShell({
+    subject: 'Compliance alert: a medical is expiring soon',
+    badge: 'Compliance alert',
+    eyebrow: 'Renewal due',
+    headline: 'A medical on your roster is expiring soon',
+    greeting: `Hi ${escapeHtml(user.details.name)},`,
+    paragraphs: [
+      'An employee on your ClinicPlus Companion roster has a medical or service due for renewal soon. Log in to view compliance status and book a renewal appointment.',
+    ],
+    rows: [
+      { label: 'Employee', value: escapeHtml(entry.employeeName) },
+      { label: 'Service', value: escapeHtml(entry.serviceId) },
+      { label: 'Expires', value: escapeHtml(entry.expiryDate) },
+    ],
+    cta: { label: 'Log in to Companion', url: `${SITE_URL}/login` },
+  });
   await sendMailjetEmail({
     from: FROM,
     to: [{ Email: user.details.email, Name: `${user.details.name} ${user.details.surname}` }],
@@ -125,12 +265,17 @@ export async function sendNewCompanyEmail(
   company: { details: { name: string } }
 ) {
   const websiteUrl = process.env.CLINICPLUS_WEBSITE_URL;
-  const html = `<p>Hi there,</p>
-  <p>You have succesfully registered ${company.details.name} on the ClinicPplus system.</p>
-  <p>Please click the link below to login</p>
-  <p><a href="${websiteUrl}/login">${websiteUrl}/login</a></p>
-  <p>Thanks,</p>
-  <p>The ClinicPlus Booking Companion Team</p>`;
+  const html = renderEmailShell({
+    subject: 'Company Registered',
+    badge: 'Registration confirmed',
+    eyebrow: 'New company',
+    headline: `${company.details.name} has been registered`,
+    greeting: 'Hi there,',
+    paragraphs: [
+      `${escapeHtml(company.details.name)} has been successfully registered on the ClinicPlus system. Log in below to get started.`,
+    ],
+    cta: { label: 'Log in', url: `${websiteUrl}/login` },
+  });
   await sendMailjetEmail({
     from: FROM,
     to: [{ Email: user.details.email, Name: `${user.details.name} ${user.details.surname}` }],
@@ -146,12 +291,18 @@ export async function sendNewCompanyEmailInternal(company: { details: { name: st
   if (!notifEmail) {
     throw new Error('CLINICPLUS_NOTIF_EMAIL not set');
   }
-  const html = `<p>Hi ClinicPlus,</p>
-  <p>Company: ${company.details.name} has been successfully registered on the ClinicPplus system.</p>
-  <p>Please click the link below to login</p>
-  <p><a href="${adminUrl}/login">${adminUrl}/login</a></p>
-  <p>Thanks,</p>
-  <p>Tecla Digital &amp; Midas Touch Technologies</p>`;
+  const html = renderEmailShell({
+    subject: 'New Company Registered',
+    badge: 'Internal notification',
+    eyebrow: 'New company',
+    headline: 'A new company has been registered',
+    greeting: 'Hi ClinicPlus,',
+    paragraphs: [
+      `Company: ${escapeHtml(company.details.name)} has been successfully registered on the ClinicPlus system.`,
+    ],
+    cta: { label: 'Log in', url: `${adminUrl}/login` },
+    signOff: 'Thanks,',
+  });
   await sendMailjetEmail({
     from: FROM_IT,
     to: [{ Email: notifEmail, Name: 'Bookings Department' }],
@@ -169,19 +320,25 @@ export async function sendFeatureRequestEmail(params: {
   impact?: string;
 }) {
   const emailConfig = featureRequestConfig.email;
-  const title = escapeHtml(params.title);
   const description = escapeHtml(params.description).replaceAll('\n', '<br/>');
   const impact = params.impact ? escapeHtml(params.impact).replaceAll('\n', '<br/>') : '';
-  const userName = escapeHtml(params.userName);
-  const userEmail = escapeHtml(params.userEmail);
-  const html = `<p>Hi ${escapeHtml(emailConfig.greetingName)},</p>
-  <p>${escapeHtml(emailConfig.intro)}</p>
-  <p><strong>User:</strong> ${userName} (${userEmail})</p>
-  <p><strong>Feature:</strong> ${title}</p>
-  <p><strong>Description:</strong><br/>${description}</p>
-  ${impact ? `<p><strong>Impact:</strong><br/>${impact}</p>` : ''}
-  <p>Thanks,</p>
-  <p>${escapeHtml(emailConfig.teamName)}</p>`;
+  const html = renderEmailShell({
+    subject: `${emailConfig.subjectPrefix} ${params.title}`,
+    badge: 'Feature request',
+    eyebrow: 'Product feedback',
+    headline: escapeHtml(params.title),
+    greeting: `Hi ${escapeHtml(emailConfig.greetingName)},`,
+    paragraphs: [
+      escapeHtml(emailConfig.intro),
+      `<strong style="color:#1c1a16;">Description</strong><br/>${description}`,
+      ...(impact ? [`<strong style="color:#1c1a16;">Impact</strong><br/>${impact}`] : []),
+    ],
+    rows: [
+      { label: 'From', value: escapeHtml(params.userName) },
+      { label: 'Email', value: escapeHtml(params.userEmail) },
+    ],
+    signOff: 'Thanks,',
+  });
 
   await sendMailjetEmail({
     from: FROM_IT,

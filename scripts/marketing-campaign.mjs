@@ -60,38 +60,92 @@ function emailHtml(invite, email, options = {}) {
   const ctaUrl = options.testMode ? testInviteUrl() : inviteUrl(invite.token);
   const optOutUrl = options.testMode ? `${campaign.baseUrl.replace(/\/$/, '')}/login` : unsubscribeUrl(invite.token);
   const body = email.body
-    .map((paragraph) => `<p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">${escapeHtml(paragraph)}</p>`)
+    .map((paragraph) => `<p style="margin:0 0 16px;color:#3f3a33;line-height:1.7;font-size:15px;">${escapeHtml(paragraph)}</p>`)
     .join('');
   const bullets = email.bullets
-    .map((item) => `<li style="margin:0 0 10px;color:#2b2b2b;line-height:1.5;"><span style="color:#b8892f;font-weight:700;">•</span> ${escapeHtml(item)}</li>`)
+    .map(
+      (item) => `<tr>
+          <td width="22" valign="top" style="padding:0 0 12px;">
+            <span style="display:inline-block;width:6px;height:6px;margin-top:8px;border-radius:999px;background:#c41230;"></span>
+          </td>
+          <td valign="top" style="padding:0 0 12px;color:#3f3a33;line-height:1.55;font-size:14.5px;">${escapeHtml(item)}</td>
+        </tr>`
+    )
     .join('');
 
   return `<!doctype html>
   <html>
-    <body style="margin:0;padding:0;background:#0f0f10;font-family:Arial,Helvetica,sans-serif;">
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>${escapeHtml(email.subject)}</title>
+    </head>
+    <body style="margin:0;padding:0;background:#f4f1ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,Helvetica,sans-serif;">
       <div style="display:none;max-height:0;overflow:hidden;color:transparent;opacity:0;">${escapeHtml(email.preview)}</div>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f0f10;padding:28px 12px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f1ea;padding:32px 12px;">
         <tr><td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #d6b25e;">
-            <tr><td style="background:#111111;padding:26px 28px;text-align:center;">
-              <img src="${campaign.logoUrl}" width="220" alt="ClinicPlus Companion" style="display:inline-block;max-width:220px;width:70%;height:auto;" />
-            </td></tr>
-            <tr><td style="padding:34px 30px 8px;">
-              <p style="margin:0 0 12px;color:#b8892f;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">${escapeHtml(email.eyebrow)}</p>
-              <h1 style="margin:0 0 18px;color:#111111;font-size:28px;line-height:1.18;font-weight:700;">${escapeHtml(email.headline)}</h1>
-              <p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">Hi ${firstName},</p>
-              <p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">${escapeHtml(email.intro)}</p>
-              ${body}
-              <ul style="margin:2px 0 22px;padding:0;list-style:none;">${bullets}</ul>
-              <table role="presentation" cellspacing="0" cellpadding="0" style="margin:26px 0;"><tr><td style="border-radius:999px;background:#c41230;">
-                <a href="${ctaUrl}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;border:1px solid #d6b25e;">${escapeHtml(email.cta)}</a>
-              </td></tr></table>
-              <p style="margin:0 0 16px;color:#666666;font-size:13px;line-height:1.6;">Use your existing ClinicPlus login. The 100-credit invite bonus is applied on first login when you enter through this email button.</p>
-            </td></tr>
-            <tr><td style="padding:22px 30px 30px;background:#fafafa;border-top:1px solid #eeeeee;">
-              <p style="margin:0;color:#555555;font-size:13px;line-height:1.6;">Thanks,<br />The ClinicPlus Team</p>
-              <p style="margin:14px 0 0;color:#777777;font-size:12px;line-height:1.5;">Prefer not to receive this invite sequence? <a href="${optOutUrl}" style="color:#c41230;text-decoration:underline;">Unsubscribe here</a>.</p>
-            </td></tr>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(20,16,8,0.06);border:1px solid #ece6d8;">
+            <tr>
+              <td style="padding:30px 32px 22px;text-align:center;background:#ffffff;border-bottom:1px solid #f0ead9;">
+                <img src="${campaign.logoUrl}" width="200" alt="ClinicPlus Booking Companion" style="display:inline-block;max-width:200px;width:60%;height:auto;" />
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 32px 0;text-align:center;">
+                <span style="display:inline-block;margin-top:20px;padding:6px 14px;border-radius:999px;background:#fbf3e0;border:1px solid #e9d6a3;color:#8a6a1f;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">
+                  New: ClinicPlus Booking Companion
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 32px 4px;">
+                <p style="margin:0 0 10px;color:#c41230;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-align:center;">
+                  ${escapeHtml(email.eyebrow)}
+                </p>
+                <h1 style="margin:0 0 20px;color:#1c1a16;font-size:26px;line-height:1.25;font-weight:700;text-align:center;">
+                  ${escapeHtml(email.headline)}
+                </h1>
+                <p style="margin:0 0 16px;color:#3f3a33;line-height:1.7;font-size:15px;">Hi ${firstName},</p>
+                <p style="margin:0 0 16px;color:#3f3a33;line-height:1.7;font-size:15px;">${escapeHtml(email.intro)}</p>
+                ${body}
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:6px 0 8px;">
+                  ${bullets}
+                </table>
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:28px auto 8px;">
+                  <tr>
+                    <td style="border-radius:999px;background:linear-gradient(180deg,#d1264a,#b8102f);box-shadow:0 6px 16px rgba(196,18,48,0.25);">
+                      <a href="${ctaUrl}" style="display:inline-block;padding:14px 26px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14.5px;border-radius:999px;">
+                        ${escapeHtml(email.cta)}
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:4px 0 4px;color:#8a857a;font-size:12.5px;line-height:1.6;text-align:center;">
+                  Use your existing ClinicPlus login. The 100-credit invite bonus is applied on first login when you enter through this email button.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:26px 32px 30px;">
+                <p style="margin:0 0 4px;color:#4a453c;font-size:13.5px;line-height:1.6;">
+                  Thanks,<br />
+                  <strong style="color:#1c1a16;">The ClinicPlus Booking Companion Team</strong>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:18px 32px 26px;background:#faf8f3;border-top:1px solid #f0ead9;">
+                <p style="margin:0 0 6px;color:#8a857a;font-size:11.5px;line-height:1.6;">
+                  ClinicPlus Booking Companion is a standalone product built and operated by
+                  Namoota Technology (Pty) Ltd for ClinicPlus clients. It is not required to use
+                  ClinicPlus and does not replace the ClinicPlus bookings website.
+                </p>
+                <p style="margin:0;color:#a49f92;font-size:11.5px;line-height:1.6;">
+                  Prefer not to receive this invite sequence?
+                  <a href="${optOutUrl}" style="color:#c41230;text-decoration:underline;">Unsubscribe here</a>.
+                </p>
+              </td>
+            </tr>
           </table>
         </td></tr>
       </table>
