@@ -235,6 +235,12 @@ export async function POST(req: NextRequest) {
   // Part F.2 — bust the cached Insights for this user so their newly-created appointment shows
   // up immediately next time they open Insights, rather than waiting out the TTL.
   await companionDb.collection('insightsCache').deleteOne({ userId });
+  // Same reasoning for the Availability Calendar's per-clinic/month cache (see
+  // /api/availability/month) — this booking changes that clinic+month's real headcount, so don't
+  // let the calendar show stale (too-open) data for up to CACHE_TTL_MS after submitting it.
+  await companionDb
+    .collection('availabilityCache')
+    .deleteOne({ key: `${clinic}:${date.slice(0, 7)}` });
 
   try {
     await sendNewAppointmentEmail(user as unknown as { details: { name: string; surname: string; email: string } }, {

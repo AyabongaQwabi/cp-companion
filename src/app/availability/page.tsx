@@ -33,6 +33,8 @@ const STATUS_LABELS: Record<AvailabilityStatus, string> = {
   full: 'Fully booked',
 };
 
+const UNKNOWN_STYLE = 'bg-gray-50 border-gray-200 text-gray-400';
+
 function daysInMonth(year: number, month: number) {
   return new Date(year, month, 0).getDate();
 }
@@ -50,6 +52,14 @@ export default function AvailabilityPage() {
   const [limit, setLimit] = useState<number | null>(null);
   const [days, setDays] = useState<Record<string, DayInfo>>({});
   const [loading, setLoading] = useState(false);
+  // Distinct from `loading`: false until the first successful fetch resolves for the
+  // currently-selected clinic/month, or true forever if the charge/fetch never ran (declined
+  // charge, insufficient credits, pending confirm modal). Every day cell falls back to "open"
+  // when `info` is missing purely because it hasn't loaded — without this flag that fallback is
+  // indistinguishable from a genuinely open day, which is exactly the silent-failure trust issue
+  // this page had: an unpaid/declined calendar load rendered as if every day were available.
+  const [loadError, setLoadError] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     if (!session) router.push('/login');
@@ -57,21 +67,32 @@ export default function AvailabilityPage() {
 
   const load = useCallback(async () => {
     if (!session) return;
-    requestAction('availability.viewCalendar', 'View availability calendar', async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ clinic, year: String(year), month: String(month) });
-      const res = await fetch(`/api/availability/month?${params}`);
-      const data = await res.json();
-      setLimit(data.limit);
-      setDays(data.days || {});
-    } finally {
-      setLoading(false);
-    }
+    setHasLoaded(false);
+    setLoadError(false);
+    setDays({});
+    await requestAction('availability.viewCalendar', 'View availability calendar', async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ clinic, year: String(year), month: String(month) });
+        const res = await fetch(`/api/availability/month?${params}`);
+        if (!res.ok) {
+          setLoadError(true);
+          return;
+        }
+        const data = await res.json();
+        setLimit(data.limit);
+        setDays(data.days || {});
+        setHasLoaded(true);
+      } catch {
+        setLoadError(true);
+      } finally {
+        setLoading(false);
+      }
     });
   }, [clinic, year, month, session, requestAction]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
@@ -138,6 +159,19 @@ export default function AvailabilityPage() {
         </p>
       )}
 
+      {!loading && (loadError || !hasLoaded) && (
+        <div className="mb-4 border border-amber-200 bg-amber-50 text-amber-800 rounded-card px-3 py-2 text-xs flex items-center justify-between gap-3">
+          <span>
+            {loadError
+              ? "Couldn't load booking data for this month — the days below don't reflect real availability."
+              : "Booking data hasn't loaded yet — the days below don't reflect real availability."}
+          </span>
+          <Button variant="secondary" className="px-2 py-1 text-xs shrink-0" onClick={() => load()}>
+            Retry
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-7 gap-2 text-xs text-gray-500 mb-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
           <div key={d} className="text-center">
@@ -151,6 +185,21 @@ export default function AvailabilityPage() {
           if (day === null) return <div key={`empty-${i}`} />;
           const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const info = days[dateStr];
+          // Only trust a day's status once this month's fetch has actually succeeded — before
+          // that (still loading, declined charge, insufficient credits, fetch error) every day
+          // renders as "unknown", never as a default "open", so an unloaded calendar can't be
+          // mistaken for a genuinely wide-open one.
+          if (!hasLoaded) {
+            return (
+              <div
+                key={dateStr}
+                className={`border rounded-card p-2 text-xs min-h-[4.5rem] flex flex-col justify-between ${UNKNOWN_STYLE}`}
+              >
+                <span className="font-medium">{day}</span>
+                <div className="opacity-60">—</div>
+              </div>
+            );
+          }
           const status: AvailabilityStatus = info?.status ?? 'open';
           return (
             <div
@@ -160,11 +209,16 @@ export default function AvailabilityPage() {
               <span className="font-medium">{day}</span>
               {info ? (
                 <div>
-                  <div>{STATUS_LABELS[status]}</div>
-                  <div className="opacity-75">{info.remaining} left</div>
+                  <div className="font-medium">{STATUS_LABELS[status]}</div>
+                  <div className="opacity-90">{info.currentBookings} booked</div>
+                  <div className="opacity-75">{info.remaining} open</div>
                 </div>
               ) : (
-                <div className="opacity-60">{STATUS_LABELS.open}</div>
+                <div>
+                  <div className="font-medium">{STATUS_LABELS.open}</div>
+                  <div className="opacity-90">0 booked</div>
+                  <div className="opacity-75">{limit ?? '—'} open</div>
+                </div>
               )}
             </div>
           );
