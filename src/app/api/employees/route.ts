@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
   const employee: Omit<RosterEmployee, '_id'> = {
     userId,
     name,
-    idNumber: idNumber || '',
+    idNumber: (idNumber && String(idNumber).trim()) || `GEN-${crypto.randomUUID()}`,
     occupation: occupation || '',
     defaultServices: defaultServices || [],
     defaultSites: defaultSites || [],
@@ -112,7 +112,8 @@ export async function POST(req: NextRequest) {
   };
 
   const result = await db.collection('employees').insertOne(employee);
-  const idWarning = isValidSouthAfricanId(employee.idNumber) === false
+  const idWasProvided = Boolean(idNumber && String(idNumber).trim());
+  const idWarning = idWasProvided && isValidSouthAfricanId(employee.idNumber) === false
     ? "This doesn't look like a valid SA ID number, please double-check."
     : undefined;
   return NextResponse.json({ ...employee, _id: result.insertedId, idWarning }, { status: 201 });

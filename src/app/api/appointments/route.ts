@@ -48,17 +48,37 @@ export async function GET(req: NextRequest) {
     Math.max(1, parseInt(req.nextUrl.searchParams.get('pageSize') || '20', 10))
   );
 
-  const query: Record<string, unknown> = { 'usersWhoCanManage.id': userId };
-  if (status) query.status = status;
-  if (clinic) query['details.clinic'] = clinic;
+  const prodDb = await getProductionDb();
+
+  // A user's manageable appointments come from two places that don't always agree:
+  // usersWhoCanManage.id on the appointment (source of truth for access control) and
+  // user.appointmentsManaging (appended at creation time — see POST below). Union both by
+  // appointment id so an appointment present in either place still shows up here.
+  const user = await prodDb.collection('users').findOne({ id: userId });
+  const managingIds = ((user?.appointmentsManaging || []) as unknown[])
+    .map((entry) => (typeof entry === 'string' ? entry : (entry as { id?: string })?.id))
+    .filter((id): id is string => Boolean(id));
+
+  const filters: Record<string, unknown> = {};
+  if (status) filters.status = status;
+  if (clinic) filters['details.clinic'] = clinic;
   if (dateFrom || dateTo) {
     const dateFilter: Record<string, string> = {};
     if (dateFrom) dateFilter.$gte = dateFrom;
     if (dateTo) dateFilter.$lte = dateTo;
-    query['details.date'] = dateFilter;
+    filters['details.date'] = dateFilter;
   }
 
-  const prodDb = await getProductionDb();
+  const query: Record<string, unknown> =
+    managingIds.length > 0
+      ? {
+          $or: [
+            { ...filters, 'usersWhoCanManage.id': userId },
+            { ...filters, id: { $in: managingIds } },
+          ],
+        }
+      : { ...filters, 'usersWhoCanManage.id': userId };
+
   const [appointments, total] = await Promise.all([
     prodDb
       .collection('appointments')

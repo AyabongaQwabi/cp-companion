@@ -36,14 +36,19 @@ export async function POST(req: NextRequest) {
   const existingIdNumbers = new Set(existing.map((e) => e.idNumber));
 
   const reviewed: ReviewedRow[] = rows
-    .filter((r) => r.name && r.idNumber)
-    .map((r) => ({
-      name: r.name.trim(),
-      idNumber: r.idNumber.trim(),
-      occupation: (r.occupation || '').trim(),
-      idValid: isValidSouthAfricanId(r.idNumber),
-      duplicateOfExistingId: existingIdNumbers.has(r.idNumber.trim()),
-    }));
+    .filter((r) => r.name)
+    .map((r) => {
+      // No id/idNumber on this row — generate a unique one rather than dropping the row, so
+      // it can still be reviewed and imported into cp_companion.employees.
+      const idNumber = r.idNumber?.trim() || `GEN-${crypto.randomUUID()}`;
+      return {
+        name: r.name.trim(),
+        idNumber,
+        occupation: (r.occupation || '').trim(),
+        idValid: r.idNumber?.trim() ? isValidSouthAfricanId(idNumber) : null,
+        duplicateOfExistingId: existingIdNumbers.has(idNumber),
+      };
+    });
 
   return NextResponse.json({ rows: reviewed });
 }

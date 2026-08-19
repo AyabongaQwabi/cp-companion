@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
       .filter(Boolean)
   );
 
-  let unmatchedCount = 0;
+  let generatedIdCount = 0;
   let groups: AppointmentGroup[] = [];
 
   for (const appt of [...liveAppointments, ...deletedAppointments]) {
@@ -73,13 +73,15 @@ export async function GET(req: NextRequest) {
     const candidates: HistoricalEmployeeCandidate[] = [];
 
     for (const emp of employees) {
-      const idNumber = emp?.idNumber == null ? '' : String(emp.idNumber).trim();
+      let idNumber = emp?.idNumber == null ? '' : String(emp.idNumber).trim();
       const name = (emp?.name || '').trim();
       if (!name) continue;
 
       if (!idNumber) {
-        unmatchedCount += 1;
-        continue;
+        // No id/idNumber on record — generate a unique one so this employee can still be
+        // imported into cp_companion.employees instead of being silently dropped.
+        idNumber = `GEN-${crypto.randomUUID()}`;
+        generatedIdCount += 1;
       }
       // Already on the roster — not a candidate to import again.
       if (existingIdNumbers.has(idNumber)) continue;
@@ -131,5 +133,5 @@ export async function GET(req: NextRequest) {
   const total = groups.length;
   const pageGroups = groups.slice((page - 1) * pageSize, page * pageSize);
 
-  return NextResponse.json({ groups: pageGroups, total, page, pageSize, unmatched: unmatchedCount });
+  return NextResponse.json({ groups: pageGroups, total, page, pageSize, generatedIds: generatedIdCount });
 }

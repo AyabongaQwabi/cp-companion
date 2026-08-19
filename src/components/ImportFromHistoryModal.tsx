@@ -57,7 +57,7 @@ export default function ImportFromHistoryModal({
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [unmatched, setUnmatched] = useState(0);
+  const [generatedIds, setGeneratedIds] = useState(0);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectedCandidates, setSelectedCandidates] = useState<Map<string, Candidate>>(new Map());
@@ -77,7 +77,7 @@ export default function ImportFromHistoryModal({
         const data = await res.json();
         setGroups(data.groups ?? []);
         setTotal(data.total ?? 0);
-        setUnmatched(data.unmatched ?? 0);
+        setGeneratedIds(data.generatedIds ?? 0);
         // All appointment sections start expanded on a fresh load — the whole point of loading
         // by default is to see who's in each appointment without an extra click per section.
         setExpandedIds(new Set((data.groups ?? []).map((g: AppointmentGroup) => g.appointmentId)));
@@ -301,11 +301,11 @@ export default function ImportFromHistoryModal({
                 setPage(1);
               }}
             />
-            {unmatched > 0 && (
+            {generatedIds > 0 && (
               <p className="text-xs text-gray-400 mt-2">
-                {unmatched} additional entries were skipped across your history — they had no
-                ID/passport number on record, so they can&apos;t be safely deduped or imported
-                automatically.
+                {generatedIds} entr{generatedIds === 1 ? 'y has' : 'ies have'} no ID/passport
+                number on record — a unique placeholder ID was generated so they can still be
+                imported. Update their real ID number once known.
               </p>
             )}
           </>

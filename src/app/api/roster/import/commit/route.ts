@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   const docs: Omit<RosterEmployee, '_id'>[] = rows.slice(0, affordableCount).map((r) => ({
     userId,
     name: r.name,
-    idNumber: r.idNumber,
+    idNumber: r.idNumber?.trim() || `GEN-${crypto.randomUUID()}`,
     occupation: r.occupation || '',
     defaultServices: [],
     defaultSites: [],

@@ -37,7 +37,7 @@ export default function ImportFromAppointmentModal({
   const { pending, balance, confirming, requestAction, confirm, cancel } = useChargedAction(userId);
   const [loading, setLoading] = useState(false);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [unmatched, setUnmatched] = useState(0);
+  const [generatedIds, setGeneratedIds] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
 
@@ -49,7 +49,7 @@ export default function ImportFromAppointmentModal({
       );
       const data = await res.json();
       setCandidates(data.candidates ?? []);
-      setUnmatched(data.unmatched ?? 0);
+      setGeneratedIds(data.generatedIds ?? 0);
     } finally {
       setLoading(false);
     }
@@ -150,10 +150,11 @@ export default function ImportFromAppointmentModal({
               ))}
             </ul>
 
-            {unmatched > 0 && (
+            {generatedIds > 0 && (
               <p className="text-xs text-gray-400 mb-2">
-                {unmatched} employee(s) on this appointment have no ID/passport number on record,
-                so they can&apos;t be safely deduped or imported.
+                {generatedIds} employee(s) on this appointment have no ID/passport number on
+                record — a unique placeholder ID was generated so they can still be imported.
+                Update their real ID number once known.
               </p>
             )}
           </>

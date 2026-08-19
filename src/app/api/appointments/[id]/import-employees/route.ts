@@ -44,16 +44,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const employees = appointment.details?.employees || [];
   const seen = new Set<string>();
   const candidates: ImportCandidate[] = [];
-  let unmatchedCount = 0;
+  let generatedIdCount = 0;
 
   for (const emp of employees) {
-    const idNumber = (emp?.idNumber || '').trim();
+    let idNumber = (emp?.idNumber || '').trim();
     const name = (emp?.name || '').trim();
     if (!name) continue;
 
     if (!idNumber) {
-      unmatchedCount += 1;
-      continue;
+      // No id/idNumber on record — generate a unique one so this employee can still be
+      // imported into cp_companion.employees instead of being silently dropped.
+      idNumber = `GEN-${crypto.randomUUID()}`;
+      generatedIdCount += 1;
     }
     // Already on the roster — don't re-show/re-offer.
     if (existingIdNumbers.has(idNumber)) continue;
@@ -68,6 +70,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   return NextResponse.json({
     appointmentId: id,
     candidates,
-    unmatched: unmatchedCount,
+    generatedIds: generatedIdCount,
   });
 }
