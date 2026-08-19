@@ -36,7 +36,7 @@ export default function Footer() {
               className="h-10 w-auto"
             />
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              A saved employee roster and booking add-on for ClinicPlus clients.
+              A standalone, credit-based account-management companion for ClinicPlus clients.
             </p>
           </div>
           {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
@@ -68,7 +68,7 @@ export default function Footer() {
           </div>
         </div>
         <p className="text-xs text-gray-400 border-t border-gray-200 pt-6">
-          © {new Date().getFullYear()} ClinicPlus Pty Ltd
+          © {new Date().getFullYear()} Namoota Technology (Pty) Ltd. Not affiliated with or operated by ClinicPlus.
         </p>
       </div>
     </footer>

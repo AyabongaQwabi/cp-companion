@@ -15,7 +15,9 @@ type CampaignEmail = {
   intro: string;
   body: string[];
   bullets: string[];
+  featureGrid?: { title: string; description: string }[];
   cta: string;
+  footNote?: string;
 };
 
 type CampaignConfig = {

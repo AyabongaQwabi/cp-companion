@@ -25,10 +25,11 @@ export default function PrivacyPage() {
 
         <h2 className="font-semibold text-gray-900 mt-8 mb-2">1. Who we are</h2>
         <p className="mb-4">
-          ClinicPlus Companion is operated by ClinicPlus Pty Ltd (&quot;we&quot;, &quot;us&quot;).
-          This policy explains what personal information we collect through the Companion
-          application, why, and how it is protected, in line with South Africa&apos;s Protection
-          of Personal Information Act, 2013 (POPIA).
+          ClinicPlus Booking Companion is a standalone product independently built and operated by{' '}
+          <strong className="text-gray-900">Namoota Technology (Pty) Ltd</strong> (&quot;we&quot;,
+          &quot;us&quot;), not by ClinicPlus. This policy explains what personal information we
+          collect through the Companion application, why, and how it is protected, in line with
+          South Africa&apos;s Protection of Personal Information Act, 2013 (POPIA).
         </p>
 
         <h2 className="font-semibold text-gray-900 mt-8 mb-2">2. What we collect</h2>
@@ -73,7 +74,16 @@ export default function PrivacyPage() {
           You can request deletion of individual roster employees at any time from within the app.
         </p>
 
-        <h2 className="font-semibold text-gray-900 mt-8 mb-2">6. Your rights</h2>
+        <h2 className="font-semibold text-gray-900 mt-8 mb-2">6. Email notifications</h2>
+        <p className="mb-4">
+          When you first log in, you are asked whether you consent to receiving email
+          notifications about your bookings, compliance reminders, credit balance, and product
+          updates. This is optional and separate from your acceptance of these terms — you can
+          change your preference at any time from Settings, and we will not email you for these
+          purposes if you opt out.
+        </p>
+
+        <h2 className="font-semibold text-gray-900 mt-8 mb-2">7. Your rights</h2>
         <p className="mb-4">
           Under POPIA you have the right to access, correct, or request deletion of your personal
           information, to object to processing, and to lodge a complaint with the Information
@@ -84,14 +94,14 @@ export default function PrivacyPage() {
           .
         </p>
 
-        <h2 className="font-semibold text-gray-900 mt-8 mb-2">7. Security</h2>
+        <h2 className="font-semibold text-gray-900 mt-8 mb-2">8. Security</h2>
         <p className="mb-4">
           We use reasonable technical and organisational measures to protect the personal
           information we hold, including access controls and encrypted connections. No system is
           completely secure, and we cannot guarantee absolute security.
         </p>
 
-        <h2 className="font-semibold text-gray-900 mt-8 mb-2">8. Contact</h2>
+        <h2 className="font-semibold text-gray-900 mt-8 mb-2">9. Contact</h2>
         <p>
           Questions about this policy or your information can be sent to{' '}
           <a href={`mailto:${SUPPORT_EMAIL}`} className="text-red-500 hover:text-red-600 transition-colors underline">

@@ -29,6 +29,7 @@ import { SITE_NAME } from '@/lib/seo';
 import { clearSession, type Session } from '@/lib/session';
 import { subscribeToCreditBalance } from '@/lib/credit-balance-events';
 import { LinkButton } from '@/components/ui/Button';
+import TermsGate from '@/components/TermsGate';
 
 interface NavBarProps {
   session: Session;
@@ -152,6 +153,7 @@ export default function NavBar({ session }: NavBarProps) {
 
   return (
     <>
+      <TermsGate session={session} />
       <span className="dashboard-nav-anchor" aria-hidden="true" />
       {/* Fixed at the true viewport top regardless of the page's own padding/max-width — the
           spacer div below reserves the equivalent height in normal flow so page content starts

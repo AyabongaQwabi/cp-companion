@@ -6,7 +6,9 @@ import Mailjet from 'node-mailjet';
 import marketingConfig from '../config/marketing-campaigns.json' with { type: 'json' };
 import contactConfig from '../config/contact.json' with { type: 'json' };
 
-const [, , command = 'dry-run', campaignId = 'clinicplus-companion-client-invite'] = process.argv;
+const [, , command = 'dry-run', firstArg = 'clinicplus-companion-client-invite', secondArg] =
+  process.argv;
+const campaignId = command === 'test-send' ? 'clinicplus-companion-client-invite' : firstArg;
 
 for (const line of fs.readFileSync('.env.local', 'utf8').split(/\n/)) {
   const match = line.match(/^([^#=]+)=(.*)$/);
@@ -45,12 +47,18 @@ function inviteUrl(token) {
   return `${campaign.baseUrl.replace(/\/$/, '')}/api/marketing/click?token=${encodeURIComponent(token)}`;
 }
 
+function testInviteUrl() {
+  return `${campaign.baseUrl.replace(/\/$/, '')}/login?invite=test-preview`;
+}
+
 function unsubscribeUrl(token) {
   return `${campaign.baseUrl.replace(/\/$/, '')}/api/marketing/unsubscribe?token=${encodeURIComponent(token)}`;
 }
 
-function emailHtml(invite, email) {
+function emailHtml(invite, email, options = {}) {
   const firstName = escapeHtml(invite.userName.split(' ')[0] || invite.userName);
+  const ctaUrl = options.testMode ? testInviteUrl() : inviteUrl(invite.token);
+  const optOutUrl = options.testMode ? `${campaign.baseUrl.replace(/\/$/, '')}/login` : unsubscribeUrl(invite.token);
   const body = email.body
     .map((paragraph) => `<p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">${escapeHtml(paragraph)}</p>`)
     .join('');
@@ -76,13 +84,13 @@ function emailHtml(invite, email) {
               ${body}
               <ul style="margin:2px 0 22px;padding:0;list-style:none;">${bullets}</ul>
               <table role="presentation" cellspacing="0" cellpadding="0" style="margin:26px 0;"><tr><td style="border-radius:999px;background:#c41230;">
-                <a href="${inviteUrl(invite.token)}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;border:1px solid #d6b25e;">${escapeHtml(email.cta)}</a>
+                <a href="${ctaUrl}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;border:1px solid #d6b25e;">${escapeHtml(email.cta)}</a>
               </td></tr></table>
               <p style="margin:0 0 16px;color:#666666;font-size:13px;line-height:1.6;">Use your existing ClinicPlus login. The 100-credit invite bonus is applied on first login when you enter through this email button.</p>
             </td></tr>
             <tr><td style="padding:22px 30px 30px;background:#fafafa;border-top:1px solid #eeeeee;">
               <p style="margin:0;color:#555555;font-size:13px;line-height:1.6;">Thanks,<br />The ClinicPlus Team</p>
-              <p style="margin:14px 0 0;color:#777777;font-size:12px;line-height:1.5;">Prefer not to receive this invite sequence? <a href="${unsubscribeUrl(invite.token)}" style="color:#c41230;text-decoration:underline;">Unsubscribe here</a>.</p>
+              <p style="margin:14px 0 0;color:#777777;font-size:12px;line-height:1.5;">Prefer not to receive this invite sequence? <a href="${optOutUrl}" style="color:#c41230;text-decoration:underline;">Unsubscribe here</a>.</p>
             </td></tr>
           </table>
         </td></tr>
@@ -91,7 +99,7 @@ function emailHtml(invite, email) {
   </html>`;
 }
 
-async function sendEmail(invite, email) {
+async function sendEmail(invite, email, options = {}) {
   const apiKey = process.env.MAILJET_API_KEY;
   const apiSecret = process.env.MAILJET_API_SECRET;
   if (!apiKey || !apiSecret) throw new Error('MAILJET_API_KEY / MAILJET_API_SECRET not set');
@@ -101,10 +109,10 @@ async function sendEmail(invite, email) {
       {
         From: { Email: contactConfig.supportEmail, Name: contactConfig.senderName },
         To: [{ Email: invite.userEmail, Name: invite.userName }],
-        Subject: email.subject,
+        Subject: options.testMode ? `[TEST] ${email.subject}` : email.subject,
         TextPart: email.preview,
-        HTMLPart: emailHtml(invite, email),
-        CustomID: `${campaign.name}:${email.step}`,
+        HTMLPart: emailHtml(invite, email, options),
+        CustomID: `${campaign.name}:${options.testMode ? 'Test' : email.step}`,
       },
     ],
   });
@@ -123,6 +131,18 @@ try {
       .sort({ 'details.email': 1 })
       .toArray();
     console.log(JSON.stringify({ campaignId, eligible: users.length, users: users.map((user) => ({ id: user.id, name: displayName(user), email: user.details.email, role: user.role })) }, null, 2));
+  } else if (command === 'test-send') {
+    const testEmail = firstArg || 'aya@qwabi.co.za';
+    const step = Number(secondArg ?? 0);
+    const email = campaign.sequence.find((item) => item.step === step);
+    if (!email) throw new Error(`No campaign email found for step ${step}`);
+    const invite = {
+      userEmail: testEmail,
+      userName: 'Aya Qwabi',
+      token: 'test-preview',
+    };
+    await sendEmail(invite, email, { testMode: true });
+    console.log(JSON.stringify({ campaignId, sent: 1, testEmail, step, subject: `[TEST] ${email.subject}` }, null, 2));
   } else if (command === 'enroll') {
     const users = await prod.collection('users').find(eligibleUserFilter()).project({ id: 1, role: 1, details: 1 }).toArray();
     let enrolled = 0;
@@ -195,7 +215,7 @@ try {
     }
     console.log(JSON.stringify({ campaignId, processed: invites.length, sent }, null, 2));
   } else {
-    throw new Error('Use one of: dry-run, enroll, send-due');
+    throw new Error('Use one of: dry-run, test-send, enroll, send-due');
   }
 } finally {
   await client.close();

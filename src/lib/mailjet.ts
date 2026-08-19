@@ -69,7 +69,7 @@ export async function sendNewAppointmentEmail(
   <p>Please click the link below to view it</p>
   <p><a href="${websiteUrl}/appointment/${appointment.id}">${websiteUrl}/appointment/${appointment.id}</a></p>
   <p>Thanks,</p>
-  <p>The ClinicPlus Team</p>`;
+  <p>The ClinicPlus Booking Companion Team</p>`;
   await sendMailjetEmail({
     from: FROM,
     to: [{ Email: user.details.email, Name: `${user.details.name} ${user.details.surname}` }],
@@ -110,7 +110,7 @@ export async function sendComplianceAlertEmail(
   <p><strong>${escapeHtml(entry.employeeName)}</strong> — ${escapeHtml(entry.serviceId)} expires on ${escapeHtml(entry.expiryDate)}.</p>
   <p>Log in to ClinicPlus Companion to view compliance status and book a renewal appointment.</p>
   <p>Thanks,</p>
-  <p>The ClinicPlus Team</p>`;
+  <p>The ClinicPlus Booking Companion Team</p>`;
   await sendMailjetEmail({
     from: FROM,
     to: [{ Email: user.details.email, Name: `${user.details.name} ${user.details.surname}` }],
@@ -130,7 +130,7 @@ export async function sendNewCompanyEmail(
   <p>Please click the link below to login</p>
   <p><a href="${websiteUrl}/login">${websiteUrl}/login</a></p>
   <p>Thanks,</p>
-  <p>The ClinicPlus Team</p>`;
+  <p>The ClinicPlus Booking Companion Team</p>`;
   await sendMailjetEmail({
     from: FROM,
     to: [{ Email: user.details.email, Name: `${user.details.name} ${user.details.surname}` }],
@@ -208,17 +208,45 @@ export async function sendMarketingCampaignEmail(params: {
     intro: string;
     body: string[];
     bullets: string[];
+    featureGrid?: { title: string; description: string }[];
     cta: string;
+    footNote?: string;
   };
 }) {
   const recipientName = escapeHtml(params.recipientName.split(' ')[0] || params.recipientName);
   const body = params.email.body
-    .map((paragraph) => `<p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">${escapeHtml(paragraph)}</p>`)
+    .map(
+      (paragraph) =>
+        `<p style="margin:0 0 16px;color:#3f3a33;line-height:1.7;font-size:15px;">${escapeHtml(paragraph)}</p>`
+    )
     .join('');
   const bullets = params.email.bullets
     .map(
       (item) =>
-        `<li style="margin:0 0 10px;color:#2b2b2b;line-height:1.5;"><span style="color:#b8892f;font-weight:700;">•</span> ${escapeHtml(item)}</li>`
+        `<tr>
+          <td width="22" valign="top" style="padding:0 0 12px;">
+            <span style="display:inline-block;width:6px;height:6px;margin-top:8px;border-radius:999px;background:#c41230;"></span>
+          </td>
+          <td valign="top" style="padding:0 0 12px;color:#3f3a33;line-height:1.55;font-size:14.5px;">${escapeHtml(item)}</td>
+        </tr>`
+    )
+    .join('');
+
+  const featureGrid = (params.email.featureGrid || [])
+    .map(
+      (feature, i) => `
+        <tr>
+          <td style="padding:${i === 0 ? '0' : '14px'} 0 0;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf8f2;border:1px solid #ecdfc2;border-radius:12px;">
+              <tr>
+                <td style="padding:16px 18px;">
+                  <p style="margin:0 0 4px;color:#8a6a1f;font-size:13.5px;font-weight:700;">${escapeHtml(feature.title)}</p>
+                  <p style="margin:0;color:#5b5548;font-size:13.5px;line-height:1.55;">${escapeHtml(feature.description)}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`
     )
     .join('');
 
@@ -229,54 +257,76 @@ export async function sendMarketingCampaignEmail(params: {
       <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
       <title>${escapeHtml(params.email.subject)}</title>
     </head>
-    <body style="margin:0;padding:0;background:#0f0f10;font-family:Arial,Helvetica,sans-serif;">
+    <body style="margin:0;padding:0;background:#f4f1ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,Helvetica,sans-serif;">
       <div style="display:none;max-height:0;overflow:hidden;color:transparent;opacity:0;">
         ${escapeHtml(params.email.preview)}
       </div>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f0f10;padding:28px 12px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f1ea;padding:32px 12px;">
         <tr>
           <td align="center">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #d6b25e;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(20,16,8,0.06);border:1px solid #ece6d8;">
               <tr>
-                <td style="background:#111111;padding:26px 28px;text-align:center;">
-                  <img src="${params.logoUrl}" width="220" alt="ClinicPlus Companion" style="display:inline-block;max-width:220px;width:70%;height:auto;" />
+                <td style="padding:30px 32px 22px;text-align:center;background:#ffffff;border-bottom:1px solid #f0ead9;">
+                  <img src="${params.logoUrl}" width="200" alt="ClinicPlus Booking Companion" style="display:inline-block;max-width:200px;width:60%;height:auto;" />
                 </td>
               </tr>
               <tr>
-                <td style="padding:34px 30px 8px;">
-                  <p style="margin:0 0 12px;color:#b8892f;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">
+                <td style="padding:8px 32px 0;text-align:center;">
+                  <span style="display:inline-block;margin-top:20px;padding:6px 14px;border-radius:999px;background:#fbf3e0;border:1px solid #e9d6a3;color:#8a6a1f;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">
+                    Credit-based power-user tool &middot; not a free app
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:22px 32px 4px;">
+                  <p style="margin:0 0 10px;color:#c41230;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-align:center;">
                     ${escapeHtml(params.email.eyebrow)}
                   </p>
-                  <h1 style="margin:0 0 18px;color:#111111;font-size:28px;line-height:1.18;font-weight:700;">
+                  <h1 style="margin:0 0 20px;color:#1c1a16;font-size:26px;line-height:1.25;font-weight:700;text-align:center;">
                     ${escapeHtml(params.email.headline)}
                   </h1>
-                  <p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">Hi ${recipientName},</p>
-                  <p style="margin:0 0 16px;color:#2b2b2b;line-height:1.65;">${escapeHtml(params.email.intro)}</p>
+                  <p style="margin:0 0 16px;color:#3f3a33;line-height:1.7;font-size:15px;">Hi ${recipientName},</p>
+                  <p style="margin:0 0 16px;color:#3f3a33;line-height:1.7;font-size:15px;">${escapeHtml(params.email.intro)}</p>
                   ${body}
-                  <ul style="margin:2px 0 22px;padding:0;list-style:none;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:6px 0 8px;">
                     ${bullets}
-                  </ul>
-                  <table role="presentation" cellspacing="0" cellpadding="0" style="margin:26px 0;">
+                  </table>
+                  ${featureGrid ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:6px 0 8px;">${featureGrid}</table>` : ''}
+                  <table role="presentation" cellspacing="0" cellpadding="0" style="margin:28px auto 8px;">
                     <tr>
-                      <td style="border-radius:999px;background:#c41230;">
-                        <a href="${params.inviteUrl}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;border:1px solid #d6b25e;">
+                      <td style="border-radius:999px;background:linear-gradient(180deg,#d1264a,#b8102f);box-shadow:0 6px 16px rgba(196,18,48,0.25);">
+                        <a href="${params.inviteUrl}" style="display:inline-block;padding:14px 26px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14.5px;border-radius:999px;">
                           ${escapeHtml(params.email.cta)}
                         </a>
                       </td>
                     </tr>
                   </table>
-                  <p style="margin:0 0 16px;color:#666666;font-size:13px;line-height:1.6;">
-                    Use your existing ClinicPlus login. The 100-credit invite bonus is applied on first login when you enter through this email button.
+                  <p style="margin:4px 0 4px;color:#8a857a;font-size:12.5px;line-height:1.6;text-align:center;">
+                    Log in with your existing ClinicPlus account &mdash; Companion is optional and never replaces the ClinicPlus bookings website.
+                  </p>
+                  ${
+                    params.email.footNote
+                      ? `<p style="margin:18px 0 0;padding:14px 16px;background:#fbf8f2;border-left:3px solid #d6b25e;border-radius:8px;color:#5b5548;font-size:13px;line-height:1.6;">${escapeHtml(params.email.footNote)}</p>`
+                      : ''
+                  }
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:26px 32px 30px;">
+                  <p style="margin:0 0 4px;color:#4a453c;font-size:13.5px;line-height:1.6;">
+                    Thanks,<br />
+                    <strong style="color:#1c1a16;">The ClinicPlus Booking Companion Team</strong>
                   </p>
                 </td>
               </tr>
               <tr>
-                <td style="padding:22px 30px 30px;background:#fafafa;border-top:1px solid #eeeeee;">
-                  <p style="margin:0;color:#555555;font-size:13px;line-height:1.6;">
-                    Thanks,<br />
-                    The ClinicPlus Team
+                <td style="padding:18px 32px 26px;background:#faf8f3;border-top:1px solid #f0ead9;">
+                  <p style="margin:0 0 6px;color:#8a857a;font-size:11.5px;line-height:1.6;">
+                    ClinicPlus Booking Companion is a standalone product built and operated by
+                    Namoota Technology (Pty) Ltd for ClinicPlus clients. It is not required to use
+                    ClinicPlus and does not replace the ClinicPlus bookings website.
                   </p>
-                  <p style="margin:14px 0 0;color:#777777;font-size:12px;line-height:1.5;">
+                  <p style="margin:0;color:#a49f92;font-size:11.5px;line-height:1.6;">
                     Prefer not to receive this invite sequence?
                     <a href="${params.unsubscribeUrl}" style="color:#c41230;text-decoration:underline;">Unsubscribe here</a>.
                   </p>

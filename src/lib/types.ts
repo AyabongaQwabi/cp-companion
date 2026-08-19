@@ -181,6 +181,9 @@ export interface CompanionUser {
   signupBonusGrantedAt: Date;
   companyIdAtSignup?: string;
   role?: 'company_user' | 'superadmin';
+  termsAcceptedAt?: Date;
+  termsVersion?: string;
+  emailConsent?: boolean;
 }
 
 // cp_companion.userPreferences — per-user app settings, currently just the
