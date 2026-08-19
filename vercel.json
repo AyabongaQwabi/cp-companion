@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/process-account-deletions",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/compliance-alerts",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}
