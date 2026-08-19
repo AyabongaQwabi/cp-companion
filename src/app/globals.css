@@ -1,8 +1,61 @@
 @import "tailwindcss";
+@source not "../../.claude";
 
+/*
+ * Design tokens — single source of truth for color, type, spacing, radius, and shadow.
+ * Every component should pull from these via Tailwind utility classes (bg-red-500, text-gold-500,
+ * rounded-card, shadow-premium, etc.) — nothing should hardcode a hex value or font size inline.
+ *
+ * Palette intent: white/off-white is the dominant canvas (~60-70%), red is the primary brand/
+ * action accent (~20%), gold is a deliberately scarce premium accent (~5-10%, never a background
+ * or body text color — borders, icon fills, gradient stops only). Neutrals carry the actual UI
+ * structure and text.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafaf9;
+  --foreground: #1c1917;
+
+  /* Red — primary brand/action accent. red-500 is the primary; not a bright/warning red. */
+  --color-red-50: #fdf2f3;
+  --color-red-100: #fbdee1;
+  --color-red-200: #f3bcc3;
+  --color-red-300: #e8899a;
+  --color-red-400: #d65a72;
+  --color-red-500: #c41230;
+  --color-red-600: #a80f29;
+  --color-red-700: #8f0d24;
+  --color-red-800: #700a1c;
+  --color-red-900: #5c0818;
+
+  /* Gold — scarce premium accent. Never a background fill or body text color. */
+  --color-gold-50: #fbf7ea;
+  --color-gold-100: #f5ecc9;
+  --color-gold-300: #e2c565;
+  --color-gold-400: #d4af37;
+  --color-gold-500: #c09a2e;
+  --color-gold-700: #8a6d1f;
+
+  /* Neutrals — what 90% of text/borders/surfaces are actually built from. */
+  --color-gray-50: #fafaf9;
+  --color-gray-100: #f2f1ef;
+  --color-gray-200: #e5e3df;
+  --color-gray-300: #d3d0ca;
+  --color-gray-400: #a8a29a;
+  --color-gray-500: #78716a;
+  --color-gray-600: #57534c;
+  --color-gray-700: #403d38;
+  --color-gray-800: #2a2724;
+  --color-gray-900: #1c1917;
+
+  /* Radius scale */
+  --radius-input: 6px;
+  --radius-card: 12px;
+  --radius-pill: 9999px;
+
+  /* Shadow scale — premium is a warm, gold-tinted lift for CTA/premium elements only. */
+  --shadow-sm: 0 1px 2px 0 rgb(28 25 23 / 0.05);
+  --shadow-md: 0 4px 12px -2px rgb(28 25 23 / 0.08), 0 2px 4px -2px rgb(28 25 23 / 0.04);
+  --shadow-premium: 0 6px 20px -4px rgb(192 154 46 / 0.25), 0 2px 6px -2px rgb(28 25 23 / 0.08);
 }
 
 @theme inline {
@@ -10,17 +63,69 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-red-50: var(--color-red-50);
+  --color-red-100: var(--color-red-100);
+  --color-red-200: var(--color-red-200);
+  --color-red-300: var(--color-red-300);
+  --color-red-400: var(--color-red-400);
+  --color-red-500: var(--color-red-500);
+  --color-red-600: var(--color-red-600);
+  --color-red-700: var(--color-red-700);
+  --color-red-800: var(--color-red-800);
+  --color-red-900: var(--color-red-900);
+
+  --color-gold-50: var(--color-gold-50);
+  --color-gold-100: var(--color-gold-100);
+  --color-gold-300: var(--color-gold-300);
+  --color-gold-400: var(--color-gold-400);
+  --color-gold-500: var(--color-gold-500);
+  --color-gold-700: var(--color-gold-700);
+
+  --color-gray-50: var(--color-gray-50);
+  --color-gray-100: var(--color-gray-100);
+  --color-gray-200: var(--color-gray-200);
+  --color-gray-300: var(--color-gray-300);
+  --color-gray-400: var(--color-gray-400);
+  --color-gray-500: var(--color-gray-500);
+  --color-gray-600: var(--color-gray-600);
+  --color-gray-700: var(--color-gray-700);
+  --color-gray-800: var(--color-gray-800);
+  --color-gray-900: var(--color-gray-900);
+
+  --radius-input: var(--radius-input);
+  --radius-card: var(--radius-card);
+  --radius-pill: var(--radius-pill);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-premium: var(--shadow-premium);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Deliberately no @media (prefers-color-scheme: dark) override — this is a light, off-white-
+   dominant B2B product by design; dark mode is out of scope for this pass. */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+@media (min-width: 1024px) {
+  main:has(> .dashboard-nav-anchor),
+  body > div:has(> .dashboard-nav-anchor) {
+    margin-left: var(--dashboard-sidebar-offset, 17.5rem) !important;
+    width: calc(100% - var(--dashboard-sidebar-offset, 17.5rem)) !important;
+    transition: margin-left 200ms ease, width 200ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
