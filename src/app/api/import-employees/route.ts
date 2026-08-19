@@ -50,11 +50,18 @@ export async function GET(req: NextRequest) {
   const [liveAppointments, deletedAppointments, existingRoster] = await Promise.all([
     prodDb.collection('appointments').find(query).toArray(),
     prodDb.collection('deleted_appointments').find(query).toArray(),
-    companionDb.collection<RosterEmployee>('employees').find({ userId }).toArray(),
+    // Match the roster's default selection surface: inactive and terminated employees can be
+    // imported again from appointment history when they return to the active roster.
+    companionDb
+      .collection<RosterEmployee>('employees')
+      .find({ userId, status: { $nin: ['inactive', 'terminated'] } })
+      .toArray(),
   ]);
 
   const existingIdNumbers = new Set(
-    existingRoster.map((e) => e.idNumber?.trim()).filter(Boolean)
+    existingRoster
+      .map((e) => (e.idNumber == null ? '' : String(e.idNumber).trim()))
+      .filter(Boolean)
   );
 
   let unmatchedCount = 0;
@@ -66,7 +73,7 @@ export async function GET(req: NextRequest) {
     const candidates: HistoricalEmployeeCandidate[] = [];
 
     for (const emp of employees) {
-      const idNumber = (emp?.idNumber || '').trim();
+      const idNumber = emp?.idNumber == null ? '' : String(emp.idNumber).trim();
       const name = (emp?.name || '').trim();
       if (!name) continue;
 
