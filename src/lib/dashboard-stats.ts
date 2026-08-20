@@ -25,7 +25,7 @@ export interface PeriodStats {
   quotesPending: { count: number; countDiferennce: number };
   hendrina: { count: number; countDiferennce: number };
   churchill: { count: number; countDiferennce: number };
-  topServices: { count: { count: { id: string; count: number; title: string }[] }; countDiferennce: number };
+  topServices: { count: { id: string; count: number; title: string }[]; countDiferennce: number };
 }
 
 interface PeriodAggRow {
@@ -170,7 +170,7 @@ function toPeriodStats(current: PeriodAggRow, previous: PeriodAggRow, topService
       count: current.churchillCount,
       countDiferennce: current.churchillCount - previous.churchillCount,
     },
-    topServices: { count: { count: topServices.count }, countDiferennce: 0 },
+    topServices: { count: topServices.count, countDiferennce: 0 },
   };
 }
 
