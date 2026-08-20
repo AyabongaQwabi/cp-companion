@@ -8,6 +8,7 @@ import { syncDormancyFlags } from './dormancy';
 import { syncNewCompanyLeads } from './new-leads';
 import { syncAnomalyWatchdog } from './anomaly-watchdog';
 import { syncAdoptionMetric } from './adoption-metric';
+import { syncFinanceAnalytics } from './finance-analytics';
 import type { SyncLogEntry } from '../types';
 
 /**
@@ -124,6 +125,7 @@ export async function runSyncPipeline(prodDb: Db, companionDb: Db) {
     await runJob('new-leads', () => syncNewCompanyLeads(prodDb, companionDb, changedCompanyIds));
     await runJob('anomaly-watchdog', () => syncAnomalyWatchdog(prodDb, companionDb, changedAppointmentIds));
     await runJob('adoption-metric', () => syncAdoptionMetric(prodDb, companionDb));
+    await runJob('finance-analytics', () => syncFinanceAnalytics(prodDb, companionDb));
 
     const status: SyncLogEntry['status'] = hadErrors ? (hadSuccesses ? 'partial' : 'failed') : 'success';
 

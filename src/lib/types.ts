@@ -463,6 +463,32 @@ export interface AdoptionMetric {
   adoptionRate: number; // companionCreatedAppointments / totalAppointments
 }
 
+// cp_companion.financeAnalyticsCache — one row per (type, month) the admin Analytics page has
+// requested, replacing the legacy GET_FINANCE_ANALYTICS socket handler (which loaded the entire
+// month's appointments plus full companies/users collections into memory on every request and
+// took minutes). Refreshed by the hourly sync job for the current and previous month only —
+// finance analytics is not same-day-sensitive the way dashboard stats are, so hourly staleness is
+// acceptable. Keyed by monthKey ("YYYY-MM") + type so x-ray-admin and all-clinics views don't
+// collide.
+export interface FinanceAnalyticsCache {
+  _id?: string;
+  monthKey: string; // "YYYY-MM"
+  type: 'all' | 'x-rays';
+  hendrina: ClinicMonthAnalytics;
+  churchill: ClinicMonthAnalytics;
+  allClinics: ClinicMonthAnalytics;
+  companiesJoined: Record<string, number>; // date (YYYY-MM-DD) -> count of companies created that day
+  usersJoined: Record<string, number>; // date (YYYY-MM-DD) -> count of client users created that day
+  lastSyncedAt: Date;
+}
+
+export interface ClinicMonthAnalytics {
+  appointments: Record<string, number>; // date -> count
+  employeesCateredTo: Record<string, number>; // date -> count
+  amountsMade: Record<string, number>; // date -> sum of payment.amount
+  servicesPerformed: Record<string, number>; // date -> count
+}
+
 // cp_companion.companyCompliancePreferences — Section 2's per-company opt-in for the public
 // compliance verification page. One row per companyId; absence of a row (or publicPageEnabled:
 // false) means the public page must 404, never silently render with defaults. publicToken is
