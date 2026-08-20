@@ -1,4 +1,5 @@
 import type { Db } from 'mongodb';
+import { normalizeServiceId } from '../compliance';
 import type { Company, CompanyProfile } from '../types';
 
 /**
@@ -113,7 +114,19 @@ export async function syncCompanyProfiles(
       const sortedDates = (agg?.bookingDates || []).filter(Boolean).sort();
       const avgBookingIntervalDays = computeAvgIntervalDays(sortedDates);
       const dominantClinic = pickDominant(agg?.clinicCounts, 'clinic');
-      const dominantServiceType = pickDominant(agg?.serviceCounts, 'serviceId');
+      // Merge legacy service ids (e.g. 'medical-examination') into their current equivalent
+      // before picking the dominant one, same normalization compliance.ts applies — otherwise a
+      // company's bookings split across an old and new id for the same service look like two
+      // separate minority services instead of one dominant one, fragmenting its peer cohort.
+      const normalizedServiceCounts = new Map<string, number>();
+      for (const sc of agg?.serviceCounts ?? []) {
+        const normalized = normalizeServiceId(sc.serviceId);
+        normalizedServiceCounts.set(normalized, (normalizedServiceCounts.get(normalized) ?? 0) + sc.count);
+      }
+      const dominantServiceType = pickDominant(
+        Array.from(normalizedServiceCounts.entries()).map(([serviceId, count]) => ({ serviceId, count })),
+        'serviceId'
+      );
       const currentEmployeeCount = agg?.employeeIdNumbers?.length ?? 0;
       const firstTracking = company.tracking?.[0]?.date;
 

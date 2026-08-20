@@ -67,7 +67,7 @@ const LEGACY_SERVICE_ID_MAP: Record<string, string> = {
   'medical-examination': 'full-exit-medical',
 };
 
-function normalizeServiceId(serviceId: string): string {
+export function normalizeServiceId(serviceId: string): string {
   return LEGACY_SERVICE_ID_MAP[serviceId] ?? serviceId;
 }
 
