@@ -7,6 +7,7 @@ import { calculateBookingPrice } from '@/lib/pricing';
 import { validateAppointmentShape } from '@/lib/appointment-shape';
 import { sendNewAppointmentEmail, sendNewAppointmentEmailInternal } from '@/lib/mailjet';
 import { chargeForAction } from '@/lib/credits';
+import { assertPlatformControlAllows, PlatformControlBlockedError } from '@/lib/platform-controls';
 import type { AppointmentDocument, AppointmentEmployee } from '@/lib/types';
 
 interface CreateAppointmentBody {
@@ -94,6 +95,28 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    await assertPlatformControlAllows('block_new_appointments');
+  } catch (err) {
+    if (err instanceof PlatformControlBlockedError) {
+      return NextResponse.json(
+        {
+          error: err.message,
+          platformControl: {
+            key: err.control.key,
+            enabled: true,
+            publicMessage: err.control.publicMessage || err.message,
+          },
+        },
+        { status: 423 }
+      );
+    }
+    return NextResponse.json(
+      { error: 'Appointment creation is temporarily unavailable. Please try again later.' },
+      { status: 503 }
+    );
+  }
+
   const body: CreateAppointmentBody = await req.json();
   const {
     companyId,

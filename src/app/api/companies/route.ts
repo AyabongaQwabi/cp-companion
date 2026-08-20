@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getProductionDb, getCompanionDb } from '@/lib/mongodb';
 import { sendNewCompanyEmail, sendNewCompanyEmailInternal } from '@/lib/mailjet';
 import { chargeForAction } from '@/lib/credits';
+import { assertPlatformControlAllows, PlatformControlBlockedError } from '@/lib/platform-controls';
 import type { Company } from '@/lib/types';
 
 interface CreateCompanyBody {
@@ -48,6 +49,28 @@ export async function GET(req: NextRequest) {
  * details.* fields cp-redesign's own create form collects).
  */
 export async function POST(req: NextRequest) {
+  try {
+    await assertPlatformControlAllows('block_new_companies');
+  } catch (err) {
+    if (err instanceof PlatformControlBlockedError) {
+      return NextResponse.json(
+        {
+          error: err.message,
+          platformControl: {
+            key: err.control.key,
+            enabled: true,
+            publicMessage: err.control.publicMessage || err.message,
+          },
+        },
+        { status: 423 }
+      );
+    }
+    return NextResponse.json(
+      { error: 'Company creation is temporarily unavailable. Please try again later.' },
+      { status: 503 }
+    );
+  }
+
   const body: CreateCompanyBody = await req.json();
   const {
     name,

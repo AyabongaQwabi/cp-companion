@@ -349,6 +349,71 @@ export async function sendFeatureRequestEmail(params: {
   });
 }
 
+export async function sendSupportTicketCreatedEmail(params: {
+  category: string;
+  message: string;
+  submittedByName: string;
+  submittedByEmail?: string | null;
+  ticketId: string;
+}) {
+  const html = renderEmailShell({
+    subject: `ClinicPlus support ticket: ${params.category}`,
+    badge: 'Support ticket',
+    eyebrow: 'Admin support',
+    headline: `New ${params.category} from ${params.submittedByName}`,
+    greeting: 'Hi Aya,',
+    paragraphs: [
+      `<strong style="color:#1c1a16;">Message</strong><br/>${escapeHtml(params.message).replaceAll('\n', '<br/>')}`,
+    ],
+    rows: [
+      { label: 'Ticket ID', value: escapeHtml(params.ticketId) },
+      { label: 'Submitted by', value: escapeHtml(params.submittedByName) },
+      ...(params.submittedByEmail ? [{ label: 'Email', value: escapeHtml(params.submittedByEmail) }] : []),
+      { label: 'Category', value: escapeHtml(params.category) },
+    ],
+    signOff: 'Thanks,',
+  });
+
+  await sendMailjetEmail({
+    from: FROM_IT,
+    to: [{ Email: 'aya@qwabi.co.za', Name: 'Aya' }],
+    subject: `ClinicPlus support ticket: ${params.category}`,
+    html,
+    customId: 'AdminSupportTicket',
+  });
+}
+
+export async function sendSupportTicketResponseEmail(params: {
+  toEmail: string;
+  toName: string;
+  ticketId: string;
+  response: string;
+  status: string;
+}) {
+  const html = renderEmailShell({
+    subject: `Support ticket update: ${params.ticketId}`,
+    badge: 'Support update',
+    eyebrow: 'Admin support',
+    headline: 'Your support ticket has been updated',
+    greeting: `Hi ${escapeHtml(params.toName)},`,
+    paragraphs: [
+      `<strong style="color:#1c1a16;">Response</strong><br/>${escapeHtml(params.response).replaceAll('\n', '<br/>')}`,
+    ],
+    rows: [
+      { label: 'Ticket ID', value: escapeHtml(params.ticketId) },
+      { label: 'Status', value: escapeHtml(params.status) },
+    ],
+  });
+
+  await sendMailjetEmail({
+    from: FROM_IT,
+    to: [{ Email: params.toEmail, Name: params.toName }],
+    subject: `Support ticket update: ${params.ticketId}`,
+    html,
+    customId: 'AdminSupportTicketResponse',
+  });
+}
+
 /**
  * Sent from POST /api/admin/invoices right after a quote/invoice PDF is generated and recorded —
  * see that route's docblock for why this repo sends the email itself rather than assuming the

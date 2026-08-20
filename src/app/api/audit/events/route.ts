@@ -4,7 +4,13 @@ import { ensureAuditIndexes } from '@/lib/audit';
 import { withAdminStatsCors, adminStatsCorsPreflight, checkAdminStatsSecret } from '@/lib/admin-stats-cors';
 import type { AuditEvent, AuditEntityType, AuditActorType } from '@/lib/types';
 
-const VALID_ENTITY_TYPES: AuditEntityType[] = ['appointment', 'user', 'company'];
+const VALID_ENTITY_TYPES: AuditEntityType[] = [
+  'appointment',
+  'user',
+  'company',
+  'platform_control',
+  'support_ticket',
+];
 const VALID_ACTOR_TYPES: AuditActorType[] = ['user', 'admin', 'system'];
 const VALID_SOURCES: AuditEvent['source'][] = ['cp-redesign', 'cp-redesign-admin', 'legacy-import', 'system'];
 
