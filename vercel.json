@@ -7,6 +7,14 @@
     {
       "path": "/api/cron/compliance-alerts",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/date-cleanup",
+      "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/cron/lifecycle-status",
+      "schedule": "0 5 * * *"
     }
   ]
 }

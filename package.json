@@ -11,7 +11,8 @@
     "marketing:test-email": "node scripts/marketing-campaign.mjs test-send",
     "backfill:employee-directory": "node scripts/backfill-employee-directory.mjs",
     "backfill:audit-events": "node scripts/backfill-audit-events.mjs",
-    "backfill:lifecycle-status": "node scripts/backfill-lifecycle-status.mjs"
+    "backfill:lifecycle-status": "node scripts/backfill-lifecycle-status.mjs",
+    "backfill:date-cleanup": "node scripts/backfill-date-cleanup.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",
