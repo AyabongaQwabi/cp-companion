@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "marketing:campaign": "node scripts/marketing-campaign.mjs",
-    "marketing:test-email": "node scripts/marketing-campaign.mjs test-send"
+    "marketing:test-email": "node scripts/marketing-campaign.mjs test-send",
+    "backfill:employee-directory": "node scripts/backfill-employee-directory.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",

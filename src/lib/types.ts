@@ -502,3 +502,84 @@ export interface CompanyCompliancePreferences {
   enabledAt: Date | null;
   enabledByUserId: string | null;
 }
+
+// --- Admin: Employee directory (backfilled from production.appointments.details.employees) ---
+// Deliberately separate from cp_companion.employees (the roster, keyed by userId — a Companion
+// user's own employee list they manage) — this is a platform-wide directory of every employee
+// ever seen across ALL appointments, for the admin portal, keyed by a derived identity rather
+// than any one user's roster membership. Backfilled by scripts/backfill-employee-directory.mjs.
+
+// cp_companion.employeeDirectory — one row per distinct employee identity.
+export interface EmployeeDirectoryEntry {
+  _id?: string;
+  // Primary key when available: the SA ID number / passport string exactly as stored on
+  // appointments (not normalized beyond trim) — this is what real appointment documents use to
+  // represent "the same person" across bookings, so it's the strongest identity signal we have
+  // short of a dedicated employee-master-data system that doesn't exist in this codebase.
+  idNumber: string | null;
+  // Fallback identity when idNumber is missing/empty on every appointment this employee appears
+  // on: lowercased, whitespace-collapsed name. Never used to merge two records that both HAVE an
+  // idNumber, even if the names differ — idNumber is authoritative whenever present on either side.
+  nameKey: string;
+  displayName: string; // most-recently-seen casing of the name, for display only
+  matchedBy: 'idNumber' | 'nameOnly';
+  // 'verified' = matched by idNumber (or a validated ID checksum). 'unverified' = matched by
+  // name only, meaning two different real people with the same name could have been merged into
+  // one directory row — surfaced in the UI so admins don't treat it as ground truth.
+  matchConfidence: 'verified' | 'unverified';
+  idNumberValid: boolean | null; // isValidSouthAfricanId() result; null = not a 13-digit number (assumed passport)
+  dateOfBirth: string | null; // YYYY-MM-DD, only set when idNumberValid === true
+  age: number | null; // only set when idNumberValid === true
+  gender: 'male' | 'female' | null; // only set when idNumberValid === true
+  occupations: string[]; // distinct occupation strings seen across their appointments
+  firstSeenAt: string; // earliest details.date this employee appears on (YYYY-MM-DD)
+  lastSeenAt: string; // latest details.date this employee appears on (YYYY-MM-DD)
+  appointmentIds: string[]; // production.appointments.id values this employee appears on
+  lastSyncedAt: Date;
+}
+
+// cp_companion.employeeStats — one row per EmployeeDirectoryEntry._id, derived aggregates.
+// Split from EmployeeDirectoryEntry so the backfill can cheaply re-derive stats without
+// re-running identity resolution, and so the two concerns (who is this person vs. how have they
+// performed) stay independently extendable.
+export interface EmployeeStats {
+  _id?: string;
+  employeeDirectoryId: string; // EmployeeDirectoryEntry._id
+  totalAppointments: number;
+  // Paid = approved, unpaid = not approved (pending or declined) — per the platform-wide rule
+  // that payment status is inferred exclusively from appointment.status, never from any other
+  // field (payment.amount can be nonzero on a pending/declined appointment; that is not payment).
+  paidAppointments: number;
+  unpaidAppointments: number;
+  totalRevenue: number; // sum of payment.amount across paid (approved) appointments only
+  monthlyTrend: { month: string; appointments: number; revenue: number }[]; // month = "YYYY-MM", paid appointments/revenue only
+  topCompanies: { companyId: string; companyName: string; appointmentCount: number }[]; // sorted desc by appointmentCount, top 5
+  lastSyncedAt: Date;
+}
+
+// --- Admin: Messaging thread management (per-appointment) ---
+// cp_companion.appointmentThreadMeta — one row per appointment that an admin has touched from the
+// Messaging page (status set, or an internal note added). Absence of a row means the thread has
+// never been triaged — the UI must treat that as 'open', not assume a default silently.
+export type ThreadStatus = 'open' | 'needs_follow_up' | 'resolved';
+
+export interface AppointmentThreadMeta {
+  _id?: string;
+  appointmentId: string; // production.appointments.id
+  status: ThreadStatus;
+  updatedAt: Date;
+  updatedByAdminId: string;
+}
+
+// cp_companion.appointmentInternalNotes — append-only, admin-staff-only notes on an appointment's
+// thread. Never surfaced to the client/user — a completely separate collection from
+// production.appointments.messages (the client-visible thread) so there is no code path that
+// could accidentally leak a note into the client-visible array.
+export interface AppointmentInternalNote {
+  _id?: string;
+  appointmentId: string;
+  note: string;
+  authorAdminId: string;
+  authorAdminName: string;
+  createdAt: Date;
+}
