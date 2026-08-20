@@ -1,7 +1,7 @@
 {
   "pricePerCreditZAR": 1,
-  "bonusRate": 0.20,
-  "bonusCap": 350,
+  "bonusRate": 0.25,
+  "bonusCap": 550,
   "bonusCapThreshold": 1000,
   "signupBonusCredits": 250,
   "bundles": [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
