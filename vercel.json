@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/db-backup",
+      "schedule": "0 2 * * *"
+    },
+    {
       "path": "/api/cron/process-account-deletions",
       "schedule": "0 3 * * *"
     },

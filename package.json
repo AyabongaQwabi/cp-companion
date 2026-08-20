@@ -14,11 +14,15 @@
     "backfill:lifecycle-status": "node scripts/backfill-lifecycle-status.mjs",
     "backfill:site-directory": "node scripts/backfill-site-directory.mjs",
     "backfill:date-cleanup": "node scripts/backfill-date-cleanup.mjs",
-    "sync:run": "node scripts/run-sync-pipeline.mjs"
+    "sync:run": "node scripts/run-sync-pipeline.mjs",
+    "backup:run": "node scripts/backup-db-to-r2.mjs",
+    "backup:restore": "node scripts/restore-db-from-r2.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1114.0",
     "@vercel/blob": "^2.8.0",
     "bcrypt-nodejs": "^0.0.3",
+    "bson": "^7.3.2",
     "framer-motion": "^13.1.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",

@@ -44,7 +44,7 @@ function log(...args) {
 
 const DRY_RUN = process.argv.includes('--dry-run');
 
-log('Audit-events legacy backfill starting', { dryRun: DRY_RUN });
+log(`Audit-events legacy backfill starting (dryRun=${DRY_RUN})`);
 
 for (const line of fs.readFileSync('.env.local', 'utf8').split(/\n/)) {
   const match = line.match(/^([^#=]+)=(.*)$/);
@@ -95,22 +95,36 @@ function buildEventDoc(entityType, entityOwnId, entry) {
 }
 
 async function importCollection(collectionName, entityType) {
-  log(`Scanning production.${collectionName}`);
-  const docs = await prodDb
+  log(`Scanning production.${collectionName}: opening cursor`);
+  const cursor = prodDb
     .collection(collectionName)
     .find({})
     .project({ id: 1, tracking: 1 })
-    .toArray();
+    .maxTimeMS(120000);
+
+  const docs = [];
+  let fetched = 0;
+  for await (const doc of cursor) {
+    docs.push(doc);
+    fetched++;
+    if (fetched % 2000 === 0) {
+      log(`production.${collectionName}: fetched ${fetched} documents so far`);
+    }
+  }
 
   let scanned = docs.length;
   let imported = 0;
   let skipped = 0;
+  let docsProcessed = 0;
+
+  log(`production.${collectionName}: fetch complete, ${scanned} documents total, starting tracking-entry import`);
 
   for (const doc of docs) {
     const ownId = doc.id;
     const tracking = doc.tracking || [];
     if (!ownId) {
       skipped += tracking.length;
+      docsProcessed++;
       continue;
     }
 
@@ -129,9 +143,14 @@ async function importCollection(collectionName, entityType) {
       }
       imported++;
     }
+
+    docsProcessed++;
+    if (docsProcessed % 500 === 0 || docsProcessed === scanned) {
+      log(`production.${collectionName}: processed ${docsProcessed}/${scanned} documents, imported ${imported}, skipped ${skipped}`);
+    }
   }
 
-  log(`Done: production.${collectionName}`, { scanned, imported, skipped });
+  log(`Done: production.${collectionName} — scanned ${scanned}, imported ${imported}, skipped ${skipped}`);
   return { scanned, imported, skipped };
 }
 
@@ -144,12 +163,9 @@ const results = {
   users: await importCollection('users', 'user'),
 };
 
-log('Backfill complete', {
-  dryRun: DRY_RUN,
-  totalScanned: results.appointments.scanned + results.companies.scanned + results.users.scanned,
-  totalImported: results.appointments.imported + results.companies.imported + results.users.imported,
-  totalSkipped: results.appointments.skipped + results.companies.skipped + results.users.skipped,
-  byEntity: results,
-});
+const totalScanned = results.appointments.scanned + results.companies.scanned + results.users.scanned;
+const totalImported = results.appointments.imported + results.companies.imported + results.users.imported;
+const totalSkipped = results.appointments.skipped + results.companies.skipped + results.users.skipped;
+log(`Backfill complete (dryRun=${DRY_RUN}) — totalScanned=${totalScanned}, totalImported=${totalImported}, totalSkipped=${totalSkipped}`);
 
 await client.close();
