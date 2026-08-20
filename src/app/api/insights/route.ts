@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Db } from 'mongodb';
 import { getProductionDb, getCompanionDb } from '@/lib/mongodb';
 import { MEDICAL_SERVICES } from '@/lib/clinicplus-constants';
+import { computeBenchmarks, type Benchmarks } from '@/lib/benchmarking';
 
 interface AppointmentDoc {
   status: string;
@@ -26,6 +28,11 @@ export interface InsightsData {
     declined: number;
     appointments: number;
   }[];
+  // One entry per company in companyBreakdown that clears the section-1 minimum-cohort-size
+  // guardrail (MIN_COHORT_SIZE in src/lib/benchmarking.ts) — a company below that threshold is
+  // simply absent here, never included with a smaller/fallback cohort. Never contains another
+  // company's name, id, or raw figures — only cohort aggregates and this company's own position.
+  benchmarks: { companyId: string; companyName: string; benchmarks: Benchmarks }[];
 }
 
 // Part F.2 — cache computed Insights per user; invalidated either by TTL or explicitly when a
@@ -33,7 +40,7 @@ export interface InsightsData {
 // this page now costs the user real credits (F.1), so a paid page-open shouldn't also be slow.
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-async function computeInsights(userId: string): Promise<InsightsData> {
+async function computeInsights(userId: string, companionDb: Db): Promise<InsightsData> {
   const db = await getProductionDb();
   const query = { 'usersWhoCanManage.id': userId };
 
@@ -130,6 +137,17 @@ async function computeInsights(userId: string): Promise<InsightsData> {
     .map(([id, v]) => ({ id, ...v }))
     .sort((a, b) => b.appointments - a.appointments);
 
+  const benchmarkResults = await Promise.all(
+    companyBreakdown.map(async (c) => ({
+      companyId: c.id,
+      companyName: c.name,
+      benchmarks: await computeBenchmarks(companionDb, c.id),
+    }))
+  );
+  const benchmarks = benchmarkResults.filter(
+    (r): r is { companyId: string; companyName: string; benchmarks: Benchmarks } => r.benchmarks !== null
+  );
+
   return {
     totalAppointments: all.length,
     monthlyVolume: Object.entries(monthly)
@@ -148,6 +166,7 @@ async function computeInsights(userId: string): Promise<InsightsData> {
     },
     serviceBreakdown,
     companyBreakdown,
+    benchmarks,
   };
 }
 
@@ -165,7 +184,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(cached.data);
   }
 
-  const data = await computeInsights(userId);
+  const data = await computeInsights(userId, companionDb);
   await cacheCollection.updateOne(
     { userId },
     { $set: { userId, data, computedAt: new Date() } },

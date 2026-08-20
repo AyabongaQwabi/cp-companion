@@ -6,6 +6,7 @@ interface BookingRow {
   bookingDates: string[];
   employeesPerBooking: number[];
   serviceIds: string[];
+  hasXray: boolean[]; // one entry per booking: did any employee on it have xray.required
 }
 
 /**
@@ -40,6 +41,11 @@ export async function syncBookingPatterns(
               in: { $concatArrays: ['$$value', { $map: { input: '$$this.services', as: 's', in: '$$s.id' } }] },
             },
           },
+          hasXray: {
+            $anyElementTrue: {
+              $map: { input: '$details.employees', as: 'e', in: { $ifNull: ['$$e.xray.required', false] } },
+            },
+          },
         },
       },
       {
@@ -48,6 +54,7 @@ export async function syncBookingPatterns(
           bookingDates: { $push: '$date' },
           employeesPerBooking: { $push: '$employeeCount' },
           serviceIds: { $push: '$serviceIds' },
+          hasXray: { $push: '$hasXray' },
         },
       },
     ])
@@ -79,6 +86,11 @@ export async function syncBookingPatterns(
             ) / 10
           : null;
 
+      const xrayAttachRate =
+        row.hasXray.length > 0
+          ? Math.round((row.hasXray.filter(Boolean).length / row.hasXray.length) * 1000) / 1000
+          : 0;
+
       operations.push({
         updateOne: {
           filter: { companyId: row._id },
@@ -89,6 +101,7 @@ export async function syncBookingPatterns(
               seasonalMonthCounts,
               avgEmployeesPerBooking,
               serviceMix,
+              xrayAttachRate,
               lastSyncedAt: now,
             },
           },

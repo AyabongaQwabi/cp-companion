@@ -55,6 +55,15 @@ export default function PrivacyPage() {
           rely on your consent (for example, storing an employee&apos;s ID number on your roster),
           you may withdraw that consent at any time by deleting the relevant record.
         </p>
+        <p className="mb-4">
+          We also process booking and roster data, in anonymized and aggregated form, to compute
+          cross-company benchmark statistics shown to other Companion users on their own Insights
+          page (for example, average spend per employee among similarly sized companies). We rely
+          on your consent for this, given when you accept these terms. A benchmark is only
+          calculated when it aggregates at least five other companies with a broadly similar
+          profile — below that, nothing is generated. No individual company is ever named,
+          identified, or otherwise made recoverable from a benchmark figure.
+        </p>
 
         <h2 className="font-semibold text-gray-900 mt-8 mb-2">4. Who we share it with</h2>
         <p className="mb-4">
@@ -65,6 +74,13 @@ export default function PrivacyPage() {
           existing file storage. Payment processing for credit top-ups is handled by Yoco
           (Yoco Group (Pty) Ltd), a South African payment services provider — we do not store your
           card details ourselves.
+        </p>
+        <p className="mb-4">
+          Anonymized, aggregated benchmark statistics derived from your company&apos;s data (see
+          above) are shown to other Companion users on their own Insights page. This is always in
+          aggregate form only, combined with data from at least five other similar companies —
+          never your company&apos;s name, exact figures, or any other individually identifying
+          detail.
         </p>
 
         <h2 className="font-semibold text-gray-900 mt-8 mb-2">5. How long we keep it</h2>

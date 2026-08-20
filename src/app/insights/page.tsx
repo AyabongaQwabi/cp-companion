@@ -14,6 +14,7 @@ import {
   FileText,
   ListChecks,
   TrendingUp,
+  Users,
 } from 'lucide-react';
 import { getSession, type Session } from '@/lib/session';
 import NavBar from '@/components/NavBar';
@@ -38,6 +39,21 @@ interface InsightsData {
     pending: number;
     declined: number;
     appointments: number;
+  }[];
+  benchmarks: {
+    companyId: string;
+    companyName: string;
+    benchmarks: {
+      cohortSize: number;
+      avgSpendPerEmployeePerYear: number;
+      xrayAttachRate: number;
+      typicalRebookingIntervalDays: number;
+      typicalRosterSize: number;
+      ownBookingIntervalDays: number | null;
+      positioning: 'above-average' | 'below-average' | 'average' | 'not-enough-data';
+      dominantServiceType: string | null;
+      dominantServiceTitle: string | null;
+    };
   }[];
 }
 
@@ -316,6 +332,65 @@ export default function InsightsPage() {
               )}
             </ul>
           </section>
+
+          {data.benchmarks.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-sm font-semibold text-gray-900 mb-3 inline-flex items-center gap-2">
+                <Users className="h-4 w-4 text-red-500" aria-hidden="true" />
+                Companies like yours
+              </h2>
+              <p className="text-xs text-gray-400 mb-3">
+                Anonymized averages across other companies with a similar roster size and service mix.
+                Never shows another company&apos;s name or exact figures.
+              </p>
+              <div className="space-y-3">
+                {data.benchmarks.map((b) => (
+                  <Card key={b.companyId} className="p-3">
+                    {data.benchmarks.length > 1 && (
+                      <p className="text-xs font-medium text-gray-900 mb-2">{b.companyName}</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-500">Avg. spend per employee / year</p>
+                        <p className="font-semibold text-gray-900">{rand(b.benchmarks.avgSpendPerEmployeePerYear)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">X-ray attach rate</p>
+                        <p className="font-semibold text-gray-900">
+                          {Math.round(b.benchmarks.xrayAttachRate * 100)}% include an x-ray
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">
+                          Typical rebooking interval
+                          {b.benchmarks.dominantServiceTitle ? ` (${b.benchmarks.dominantServiceTitle})` : ''}
+                        </p>
+                        <p className="font-semibold text-gray-900">
+                          every {b.benchmarks.typicalRebookingIntervalDays} days
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Typical roster size</p>
+                        <p className="font-semibold text-gray-900">{b.benchmarks.typicalRosterSize} employees</p>
+                      </div>
+                    </div>
+                    {b.benchmarks.positioning !== 'not-enough-data' && (
+                      <p className="text-xs text-gray-600 mt-3 pt-3 border-t border-gray-100">
+                        Your booking frequency is{' '}
+                        <strong className="text-gray-900">
+                          {b.benchmarks.positioning === 'average' ? 'about average' : b.benchmarks.positioning.replace('-', ' ')}
+                        </strong>{' '}
+                        for your peer group.
+                      </p>
+                    )}
+                    <p className="text-[11px] text-gray-400 mt-2">
+                      Based on {b.benchmarks.cohortSize} similar companies.
+                    </p>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          )}
 
           {data.companyBreakdown.length > 1 && (
             <section>

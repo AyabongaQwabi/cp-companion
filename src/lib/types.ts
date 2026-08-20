@@ -388,6 +388,9 @@ export interface BookingPattern {
   seasonalMonthCounts: Record<string, number>; // "01".."12" -> appointment count, all-time
   avgEmployeesPerBooking: number | null;
   serviceMix: Record<string, number>; // serviceId -> count across all bookings
+  // x-ray is a separate employee.xray.required flag, not a MEDICAL_SERVICES id, so it can't live
+  // in serviceMix — tracked as its own fraction for the section-1 x-ray attach-rate benchmark.
+  xrayAttachRate: number; // fraction of this company's bookings (0-1) that included an x-ray
   lastSyncedAt: Date;
 }
 

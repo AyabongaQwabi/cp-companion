@@ -79,6 +79,18 @@ export default function TermsPage() {
           . You confirm you have the authority and any consent needed from the employees whose
           information you submit.
         </p>
+        <p className="mb-4">
+          Namoota also aggregates booking and roster data across companies using Companion to
+          produce anonymized benchmark statistics — for example, average spend per employee for
+          companies of a similar size, or how a typical rebooking interval compares to yours. A
+          benchmark is only ever calculated and shown when it is based on at least five other
+          companies with a broadly similar profile; below that number, no benchmark is generated
+          for that comparison at all. These benchmarks never identify, name, or make any other
+          company individually recoverable — you will never see another company&apos;s name, exact
+          figures, or any detail that could single one out. By using Companion, you consent to your
+          company&apos;s data being included, in anonymized aggregate form only, in these
+          cross-company benchmarks.
+        </p>
 
         <h2 className="font-semibold text-gray-900 mt-8 mb-2">6. Email notifications</h2>
         <p className="mb-4">
