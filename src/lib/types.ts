@@ -567,6 +567,78 @@ export interface EmployeeStats {
   lastSyncedAt: Date;
 }
 
+// --- Admin: Site directory (backfilled/synced from production.appointments.details.employees[].sites[]) ---
+//
+// IMPORTANT domain distinction — do not confuse with either of these unrelated things that also
+// go by "site"/"location" in this codebase:
+//   1. ClinicPlus's own two physical clinics ("Hendrina" and "Churchill" — config/clinics.json,
+//      CLINIC_LOCATIONS in clinicplus-constants.ts, systemSettings.limits.Hendrina/.Churchill,
+//      already served by /api/admin/availability/capacity + src/lib/availability.ts). Unrelated.
+//      Confusingly, a client worksite can be named e.g. "Hendrina Colliery" — same word, unrelated
+//      entity; this directory is about the worksite, never the clinic.
+//   2. cp_companion.sites (RosterSite, above) — a single company contact's own personal,
+//      userId-scoped convenience list of site names for quick-fill on the booking form. This new
+//      directory is platform-wide (not scoped to one user/company) and is a derived analytics
+//      view built from real appointment history, not a hand-maintained personal list. The two
+//      collections are intentionally never cross-referenced.
+//
+// One row per distinct real-world client worksite (e.g. a mine, a plant) that has appeared in at
+// least one appointment's details.employees[].sites[]. Populated/refreshed hourly by
+// syncSiteDirectory (src/lib/sync/site-directory.ts). Admin-portal only.
+export interface SiteDirectoryEntry {
+  _id?: string;
+  name: string; // most-recently-seen casing/spelling, for display
+  normalizedNameKey: string; // trim + lowercase + collapse internal whitespace — the dedup/match key this row is upserted on
+  companyIds: string[]; // distinct production.companies.id values whose appointments have referenced this site
+  firstSeenAt: Date;
+  lastUsedAt: Date;
+  appointmentCount: number; // running count of appointments (not employees) referencing this site at least once
+  // --- Admin-editable metadata. Never auto-derived from production data — every field here
+  // defaults to null (or [] for none-set) until an admin explicitly fills it in via PATCH
+  // /api/admin/sites/[id]. The sync job must never overwrite any of these once set.
+  address: string | null;
+  gpsCoordinates: { lat: number; lng: number } | null;
+  region: string | null;
+  siteType: string | null;
+  // Optional daily-appointment-style cap, FOR FUTURE USE ONLY — deliberately not wired into any
+  // capacity/availability logic. Unrelated to systemSettings.limits.Hendrina/.Churchill and to
+  // src/lib/availability.ts; do not let this field influence booking availability anywhere.
+  capacity: number | null;
+  onSiteContactName: string | null;
+  onSiteContactPhone: string | null;
+  accessRequirements: string | null;
+  accessCardTypicallyRequired: boolean | null;
+  notes: string | null;
+  // 'dormant' when this site's own days-since-lastUsedAt exceeds 2x its own historical average
+  // booking interval — same DORMANCY_MULTIPLIER logic as dormancy.ts, scoped to this site's own
+  // cadence rather than a company's. See computeSiteStatus in site-directory.ts for the exact
+  // (simplified) heuristic used, since a site's true per-visit interval isn't cheaply computable
+  // in this job the way a company's is — documented there.
+  status: 'active' | 'dormant';
+  lastSyncedAt: Date;
+}
+
+// cp_companion.siteDirectoryDuplicateFlags — review queue for near-identical site names (e.g.
+// "Hendrina" vs "hendrina mine" vs "Hendrina Colliery") surfaced by syncSiteDirectory's fuzzy
+// pass over normalizedNameKey. Deliberately NOT auto-merged — a wrong merge silently corrupts
+// appointmentCount/companyIds history for two genuinely different sites, which is worse than
+// leaving a duplicate unresolved. Resolved only via POST /api/admin/sites/merge (status:
+// 'merged') or the dismiss route (status: 'dismissed', "these are actually different sites").
+export interface SiteDirectoryDuplicateFlag {
+  _id?: string;
+  siteIdA: string; // SiteDirectoryEntry._id (string form)
+  siteIdB: string; // SiteDirectoryEntry._id (string form)
+  nameA: string;
+  nameB: string;
+  // Token-overlap (Jaccard-style) similarity in [0, 1] — see computeSimilarity in
+  // site-directory.ts for the exact method and why it was chosen over edit-distance.
+  similarityScore: number;
+  status: 'pending' | 'merged' | 'dismissed';
+  flaggedAt: Date;
+  resolvedAt?: Date;
+  resolvedByAdminId?: string;
+}
+
 // --- Admin: Messaging thread management (per-appointment) ---
 // cp_companion.appointmentThreadMeta — one row per appointment that an admin has touched from the
 // Messaging page (status set, or an internal note added). Absence of a row means the thread has
@@ -671,4 +743,67 @@ export interface AuditEvent {
   metadata?: Record<string, unknown>;
   source: 'cp-redesign' | 'cp-redesign-admin' | 'legacy-import' | 'system';
   createdAt: Date;
+}
+
+// --- cp_companion.invoices: authoritative invoice/quote records, computed server-side ---
+// Replaces the legacy round-trip where cp-redesign-admin's/cp-redesign's quote page generated a
+// fresh `uuid()` invoiceId on every mount (never persisted, never idempotent — two PDF downloads
+// of the same appointment got two different "invoice numbers") and emitted SEND_INVOICE to the
+// legacy clinicplus-server-latest-stable-version Express/Socket.IO server, which appended a doc
+// (shape: { appointment, company, client, payment: { amount }, url, date }) to its own legacy
+// invoices collection — read here for the field names cp-redesign-admin's invoices list view
+// (src/views/invoices/index.js) already expected, but NOT the source of truth going forward.
+// That legacy handler is left completely untouched (out of scope, and other consumers may still
+// read it) — this collection is a new, parallel, authoritative record populated by
+// POST /api/admin/invoices, and GET /api/admin/invoices/compute is the only place `amount` is
+// ever computed, always via calculateBookingPrice() (src/lib/pricing.ts) so it can never drift
+// from the same formula the anomaly-watchdog uses to flag legacy payment.amount mismatches.
+//
+// amount is typed as a plain `number`, never optional/nullable: every write path that produces an
+// Invoice document MUST catch pricing computation failures before insert (see compute/route.ts's
+// try/catch around calculateBookingPrice) rather than ever persisting a doc whose amount could be
+// undefined — the client's `formatPrice` calls `.toFixed(2)` directly on this field with no
+// runtime guard, so an undefined amount here would crash the whole invoices list render exactly
+// like the pre-fix cp-redesign-admin bug this collection exists to eliminate.
+export interface Invoice {
+  _id?: string;
+  // Stable, human-readable, generated once per appointment and reused on every subsequent
+  // lookup/re-fetch (see compute/route.ts's find-or-create). Scheme: `INV-{year}-{6 hex chars
+  // derived from appointmentId}` — deterministic from appointmentId (not a random uuid) so the
+  // *same* appointment always resolves to the *same* invoiceId even if the compute endpoint's
+  // find-or-create races or is called before the DB write is visible, without needing a separate
+  // counter/sequence collection. {year} is the year the invoice number was first generated (not
+  // necessarily the appointment date), matching how a real invoice-numbering scheme is normally
+  // read (year the invoice was raised).
+  invoiceId: string;
+  appointmentId: string; // production.appointments.id
+  companyId: string; // production.appointments.details.company.id
+  companyName: string; // production.appointments.details.company.name, denormalized for list/search display
+  // Best available proxy for "the client" on an appointment document, which has no dedicated
+  // client/createdBy field — production.appointments.usersWhoCanEdit[0] (the booking's primary
+  // owner), matching the same usersWhoCanEdit/usersWhoCanManage[0] convention already used
+  // elsewhere in this codebase (e.g. admin/messaging/threads/route.ts's userName). Assumption,
+  // documented here since AppointmentDocument itself does not name a canonical "client" field.
+  clientUserId: string | null;
+  clientName: string | null;
+  clientEmail: string | null;
+  amount: number; // ALWAYS a number — see class docblock above. Equal to servicesBreakdown.grandTotal.
+  servicesBreakdown: {
+    // Per selected MEDICAL_SERVICES id (see clinicplus-constants.ts), mirrors the quote page's
+    // "Service prices" section: how many employees have that service, and the subtotal charged.
+    services: { serviceId: string; title: string; count: number; subtotal: number }[];
+    servicesSubtotal: number;
+    doverEmployeeCount: number;
+    doverSubtotal: number;
+    xrayEmployeeCount: number;
+    xraySubtotal: number;
+    // servicesSubtotal + doverSubtotal + xraySubtotal — always equal to calculateBookingPrice()'s
+    // return value and to the top-level `amount` field above.
+    grandTotal: number;
+  };
+  pdfUrl: string | null; // set once the client uploads the generated PDF; null for a computed-but-not-yet-sent invoice
+  sentAt: Date;
+  sentByActorId: string | null; // admin id, or null for a legacy-import/system row
+  sentByActorName: string | null;
+  emailedTo: string[];
 }

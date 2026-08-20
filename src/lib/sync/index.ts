@@ -4,6 +4,7 @@ import { syncCompanyProfiles } from './company-profiles';
 import { syncBookingPatterns } from './booking-patterns';
 import { syncComplianceCache } from './compliance-cache';
 import { syncDataQualitySweep } from './data-quality-sweep';
+import { syncSiteDirectory } from './site-directory';
 import { syncDormancyFlags } from './dormancy';
 import { syncNewCompanyLeads } from './new-leads';
 import { syncAnomalyWatchdog } from './anomaly-watchdog';
@@ -121,6 +122,7 @@ export async function runSyncPipeline(prodDb: Db, companionDb: Db) {
     await runJob('booking-patterns', () => syncBookingPatterns(prodDb, companionDb, changedCompanyIds));
     await runJob('compliance-cache', () => syncComplianceCache(prodDb, companionDb));
     await runJob('data-quality-sweep', () => syncDataQualitySweep(prodDb, companionDb));
+    await runJob('site-directory', () => syncSiteDirectory(prodDb, companionDb, changedAppointmentIds));
     await runJob('dormancy', () => syncDormancyFlags(companionDb));
     await runJob('new-leads', () => syncNewCompanyLeads(prodDb, companionDb, changedCompanyIds));
     await runJob('anomaly-watchdog', () => syncAnomalyWatchdog(prodDb, companionDb, changedAppointmentIds));

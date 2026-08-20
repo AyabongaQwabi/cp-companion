@@ -12,7 +12,9 @@
     "backfill:employee-directory": "node scripts/backfill-employee-directory.mjs",
     "backfill:audit-events": "node scripts/backfill-audit-events.mjs",
     "backfill:lifecycle-status": "node scripts/backfill-lifecycle-status.mjs",
-    "backfill:date-cleanup": "node scripts/backfill-date-cleanup.mjs"
+    "backfill:site-directory": "node scripts/backfill-site-directory.mjs",
+    "backfill:date-cleanup": "node scripts/backfill-date-cleanup.mjs",
+    "sync:run": "node scripts/run-sync-pipeline.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",

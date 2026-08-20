@@ -349,6 +349,46 @@ export async function sendFeatureRequestEmail(params: {
   });
 }
 
+/**
+ * Sent from POST /api/admin/invoices right after a quote/invoice PDF is generated and recorded —
+ * see that route's docblock for why this repo sends the email itself rather than assuming the
+ * legacy SEND_INVOICE handler already does (unverified, so this is a safety default, not a
+ * guaranteed non-duplicate). `to` accepts multiple recipients since a company invoice can be
+ * emailed to more than one address (emailedTo[] on the Invoice document).
+ */
+export async function sendInvoiceEmail(params: {
+  to: EmailRecipient[];
+  companyName: string;
+  invoiceId: string;
+  amount: number;
+  pdfUrl: string;
+}) {
+  const formattedAmount = `R ${params.amount.toFixed(2)}`;
+  const html = renderEmailShell({
+    subject: `Invoice ${params.invoiceId}`,
+    badge: 'Invoice sent',
+    eyebrow: 'ClinicPlus invoice',
+    headline: `Your invoice for ${escapeHtml(params.companyName)}`,
+    greeting: 'Hi there,',
+    paragraphs: [
+      'Please find your ClinicPlus invoice attached/linked below. If you have any questions about this invoice, please get in touch.',
+    ],
+    rows: [
+      { label: 'Invoice Number', value: escapeHtml(params.invoiceId) },
+      { label: 'Company', value: escapeHtml(params.companyName) },
+      { label: 'Amount', value: escapeHtml(formattedAmount) },
+    ],
+    cta: { label: 'View invoice PDF', url: params.pdfUrl },
+  });
+  await sendMailjetEmail({
+    from: FROM,
+    to: params.to,
+    subject: `Invoice ${params.invoiceId}`,
+    html,
+    customId: 'Invoice',
+  });
+}
+
 export async function sendMarketingCampaignEmail(params: {
   to: EmailRecipient;
   logoUrl: string;
