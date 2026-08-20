@@ -82,6 +82,13 @@ export function validateAppointmentShape(appt: AppointmentDocument): string[] {
     'messages',
     'status',
     'invoice',
+    // Additive-only fields written by the daily lifecycle-status job (never set at creation,
+    // but allowed here so a document that already has them can still pass a future re-validate).
+    'lifecycleStatus',
+    'lifecycleStatusReason',
+    'lifecycleStatusSetAt',
+    'pipelineComplete',
+    'pipelineCompletedAt',
   ]);
   Object.keys(appt).forEach((k) => {
     if (!allowedTopLevel.has(k)) {

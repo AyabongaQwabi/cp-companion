@@ -35,6 +35,12 @@ const STATUS_STYLES: Record<string, string> = {
   declined: 'bg-red-50 text-red-700',
 };
 
+const LIFECYCLE_STATUS_STYLES: Record<string, string> = {
+  expired: 'bg-gray-100 text-gray-500',
+  approved: 'bg-green-50 text-green-700',
+  completed: 'bg-blue-50 text-blue-700',
+};
+
 function employeePrice(employee: AppointmentEmployee): number {
   const servicesPrice = employee.services.reduce((sum, s) => sum + s.price, 0);
   return servicesPrice;
@@ -176,9 +182,16 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
       {!loading && appointment && (
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <span className={`inline-block rounded-pill px-3 py-1 text-sm font-medium ${STATUS_STYLES[appointment.status] || 'bg-gray-100 text-gray-700'}`}>
-              {appointment.status}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`inline-block rounded-pill px-3 py-1 text-sm font-medium ${STATUS_STYLES[appointment.status] || 'bg-gray-100 text-gray-700'}`}>
+                {appointment.status}
+              </span>
+              {appointment.lifecycleStatus && (
+                <span className={`inline-block rounded-pill px-3 py-1 text-sm font-medium ${LIFECYCLE_STATUS_STYLES[appointment.lifecycleStatus] || 'bg-gray-100 text-gray-700'}`}>
+                  {appointment.lifecycleStatus}
+                </span>
+              )}
+            </div>
             <div className="flex gap-2 flex-wrap">
               <Link href={`/appointments/${id}/edit`}>
                 <Button variant="secondary" className="text-xs px-3 py-1.5">

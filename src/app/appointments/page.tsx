@@ -22,12 +22,19 @@ interface AppointmentRow {
   };
   status: 'pending' | 'approved' | 'declined';
   payment: { amount: number };
+  lifecycleStatus?: 'expired' | 'approved' | 'completed';
 }
 
 const STATUS_STYLES: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-700',
   approved: 'bg-green-50 text-green-700',
   declined: 'bg-red-50 text-red-700',
+};
+
+const LIFECYCLE_STATUS_STYLES: Record<string, string> = {
+  expired: 'bg-gray-100 text-gray-500',
+  approved: 'bg-green-50 text-green-700',
+  completed: 'bg-blue-50 text-blue-700',
 };
 
 /**
@@ -166,6 +173,11 @@ export default function AppointmentsPage() {
                     <span className={`inline-block rounded-pill px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.status] || 'bg-gray-100 text-gray-700'}`}>
                       {a.status}
                     </span>
+                    {a.lifecycleStatus && (
+                      <span className={`ml-1 inline-block rounded-pill px-2 py-0.5 text-xs font-medium ${LIFECYCLE_STATUS_STYLES[a.lifecycleStatus] || 'bg-gray-100 text-gray-700'}`}>
+                        {a.lifecycleStatus}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-gray-700">{a.details?.employees?.length ?? 0}</td>
                   <td className="px-3 py-2 text-gray-900 font-medium">

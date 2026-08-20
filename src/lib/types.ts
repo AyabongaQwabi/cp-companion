@@ -64,6 +64,16 @@ export interface AppointmentDocument {
   tracking: { type: string; date: Date; doer: string }[];
   messages: AppointmentMessage[];
   status: 'pending' | 'approved' | 'declined';
+
+  // --- Additive-only lifecycle enrichment fields, written exclusively by the daily
+  // lifecycle-status job (src/lib/sync/lifecycle-status.ts). Never written by any user-facing
+  // request path, and never read as a substitute for `status` by anything that still needs the
+  // raw admin-set value. See that file's doc comment for the full rule set.
+  lifecycleStatus?: 'expired' | 'approved' | 'completed';
+  lifecycleStatusReason?: string;
+  lifecycleStatusSetAt?: Date;
+  pipelineComplete?: boolean;
+  pipelineCompletedAt?: Date;
 }
 
 // cp_companion.employees — the roster (add-on's own data, separate from production).
