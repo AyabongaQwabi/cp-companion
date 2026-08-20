@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Building2, Save, Trash2, UserPlus } from 'lucide-react';
+import { Building2, Save, ShieldCheck, Trash2, UserPlus } from 'lucide-react';
 import { getSession, type Session } from '@/lib/session';
 import type { Company, RosterEmployee, EmployeeGroup } from '@/lib/types';
 import NavBar from '@/components/NavBar';
@@ -43,13 +43,27 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
   const [postalAddress, setPostalAddress] = useState('');
   const [saving, setSaving] = useState(false);
 
+  interface ChampionData {
+    isChampion: boolean;
+    compliantCount: number;
+    totalTrackedCount: number;
+    trackedServiceCount: number;
+    totalServiceCount: number;
+    asOfDate: string;
+  }
+  const [champion, setChampion] = useState<ChampionData | null>(null);
+  const [publicPageEnabled, setPublicPageEnabled] = useState(false);
+  const [publicToken, setPublicToken] = useState<string | null>(null);
+  const [togglingPublicPage, setTogglingPublicPage] = useState(false);
+
   const load = useCallback(async (uid: string) => {
     setLoading(true);
     try {
-      const [companiesRes, membersRes, groupsRes] = await Promise.all([
+      const [companiesRes, membersRes, groupsRes, championRes] = await Promise.all([
         fetch(`/api/companies?userId=${encodeURIComponent(uid)}`),
         fetch(`/api/companies/${companyId}/employees`),
         fetch(`/api/employee-groups?userId=${encodeURIComponent(uid)}`),
+        fetch(`/api/companies/${companyId}/compliance-champion?userId=${encodeURIComponent(uid)}`),
       ]);
       const allCompanies: Company[] = await companiesRes.json();
       const found = allCompanies.find((c) => c.id === companyId) ?? null;
@@ -64,10 +78,31 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
       }
       setMembers(await membersRes.json());
       setGroups(await groupsRes.json());
+      const championData = await championRes.json();
+      setChampion(championData.champion);
+      setPublicPageEnabled(championData.publicPageEnabled);
+      setPublicToken(championData.publicToken);
     } finally {
       setLoading(false);
     }
   }, [companyId]);
+
+  const togglePublicPage = async (enabled: boolean) => {
+    if (!session) return;
+    setTogglingPublicPage(true);
+    try {
+      const res = await fetch(`/api/companies/${companyId}/compliance-champion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: session.id, enabled }),
+      });
+      const data = await res.json();
+      setPublicPageEnabled(data.publicPageEnabled);
+      setPublicToken(data.publicToken);
+    } finally {
+      setTogglingPublicPage(false);
+    }
+  };
 
   useEffect(() => {
     if (!session) {
@@ -237,6 +272,54 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               {saving ? 'Saving…' : 'Save details'}
             </Button>
           </section>
+
+          {champion && (
+            <section className="border border-gray-200 rounded-card p-4 mb-8 bg-white shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <ShieldCheck
+                  className={`h-4 w-4 ${champion.isChampion ? 'text-green-600' : 'text-gray-400'}`}
+                  aria-hidden="true"
+                />
+                <h2 className="text-sm font-semibold text-gray-900">
+                  {champion.isChampion ? 'Compliance champion' : 'Compliance status'}
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">
+                {champion.totalTrackedCount > 0
+                  ? `${champion.compliantCount} of ${champion.totalTrackedCount} tracked employees are currently valid — 100% current on tracked medical types.`
+                  : 'No roster employees have a tracked-service appointment yet.'}
+              </p>
+              <p className="text-[11px] text-gray-400 mb-4">
+                Tracks {champion.trackedServiceCount} of {champion.totalServiceCount} ClinicPlus
+                service types — not every service is currently expiry-tracked, so this reflects
+                only the types tracked as of {champion.asOfDate}, not full occupational health
+                compliance.
+              </p>
+
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div>
+                  <p className="text-xs font-medium text-gray-900">Public verification link</p>
+                  <p className="text-[11px] text-gray-500">
+                    Opt-in only. Shares just the count and date above — no names or ID numbers —
+                    with anyone who has the link.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => togglePublicPage(!publicPageEnabled)}
+                  disabled={togglingPublicPage}
+                  variant={publicPageEnabled ? 'secondary' : 'primary'}
+                  className="text-xs px-3 py-1.5 shrink-0"
+                >
+                  {togglingPublicPage ? 'Saving…' : publicPageEnabled ? 'Turn off' : 'Turn on'}
+                </Button>
+              </div>
+              {publicPageEnabled && publicToken && (
+                <p className="text-[11px] text-gray-500 mt-2 break-all">
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/compliance/verify/{publicToken}
+                </p>
+              )}
+            </section>
+          )}
 
           <section>
             <div className="flex items-center justify-between mb-3">

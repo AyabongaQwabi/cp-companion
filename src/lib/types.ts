@@ -462,3 +462,17 @@ export interface AdoptionMetric {
   companionCreatedAppointments: number;
   adoptionRate: number; // companionCreatedAppointments / totalAppointments
 }
+
+// cp_companion.companyCompliancePreferences — Section 2's per-company opt-in for the public
+// compliance verification page. One row per companyId; absence of a row (or publicPageEnabled:
+// false) means the public page must 404, never silently render with defaults. publicToken is
+// generated once, on first opt-in, and is the only way to reach the public page — never the
+// companyId itself, so a guessable ClinicPlus company id can't be used to probe compliance data.
+export interface CompanyCompliancePreferences {
+  _id?: string;
+  companyId: string;
+  publicPageEnabled: boolean;
+  publicToken: string | null;
+  enabledAt: Date | null;
+  enabledByUserId: string | null;
+}
