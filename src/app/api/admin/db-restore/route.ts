@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { listBackupRuns, runDbRestore } from '@/lib/db-restore';
 import { getCompanionDb } from '@/lib/mongodb';
 
-export const maxDuration = 800;
+// 300 is the max Vercel Hobby allows (Builder rejects deploys with anything higher).
+export const maxDuration = 300;
 
 /**
  * Destructive, rarely-used admin operation — deliberately NOT wired into admin-stats-cors.ts's

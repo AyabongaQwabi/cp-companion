@@ -3,10 +3,10 @@ import { getCompanionDb } from '@/lib/mongodb';
 import { runDbBackup } from '@/lib/db-backup';
 
 // Dumping production's larger collections (e.g. appointments, ~34k docs) has been observed to
-// take several minutes on this Atlas cluster's current tier. Request the longest duration this
-// plan allows; Hobby caps at 60s regardless of this value, in which case this job WILL time out
-// on the largest collections and Vercel's function plan needs upgrading (or the cluster tier does).
-export const maxDuration = 800;
+// take several minutes on this Atlas cluster's current tier. 300 is the max Vercel Hobby allows
+// (Builder rejects deploys with anything higher); if the largest collections still time out at
+// 300s, this job needs a Pro plan (higher cap) or the cluster tier needs upgrading.
+export const maxDuration = 300;
 
 /**
  * Daily job (Vercel-native cron, see vercel.json). Dumps every collection in production and
