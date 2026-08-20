@@ -335,6 +335,184 @@ async function getLatestMessages(prodDb: Db, type: 'all' | 'x-rays') {
     .slice(0, 5);
 }
 
+export interface RevenueTrendPoint {
+  date: string; // YYYY-MM-DD
+  amount: number;
+  appointments: number;
+}
+
+export interface QuoteBacklogBuckets {
+  '0-3d': number;
+  '4-7d': number;
+  '8d+': number;
+}
+
+export interface ClinicComparison {
+  clinic: string;
+  appointments: number;
+  amount: number;
+  employeesCateredTo: number;
+}
+
+export interface TopCompany {
+  name: string;
+  appointments: number;
+  amount: number;
+}
+
+export interface StatusBreakdown {
+  pending: number;
+  approved: number;
+  declined: number;
+}
+
+async function getRevenueTrend(
+  prodDb: Db,
+  type: 'all' | 'x-rays',
+  days: number
+): Promise<RevenueTrendPoint[]> {
+  const start = moment().subtract(days - 1, 'days').format(DATE_FORMAT);
+  const end = moment().format(DATE_FORMAT);
+  const match = buildDateMatch(type, start, end);
+
+  const rows = await prodDb
+    .collection('appointments')
+    .aggregate<{ _id: string; amount: number; appointments: number }>([
+      { $match: match },
+      {
+        $group: {
+          _id: '$details.date',
+          amount: { $sum: { $ifNull: ['$payment.amount', 0] } },
+          appointments: { $sum: 1 },
+        },
+      },
+    ])
+    .toArray();
+
+  const byDate = new Map(rows.map((r) => [r._id, r]));
+  const points: RevenueTrendPoint[] = [];
+  for (let i = 0; i < days; i++) {
+    const date = moment(start, DATE_FORMAT).add(i, 'days').format(DATE_FORMAT);
+    const row = byDate.get(date);
+    points.push({ date, amount: row?.amount ?? 0, appointments: row?.appointments ?? 0 });
+  }
+  return points;
+}
+
+async function getQuoteBacklogAging(
+  prodDb: Db,
+  type: 'all' | 'x-rays'
+): Promise<QuoteBacklogBuckets> {
+  const match: Record<string, unknown> = {
+    'payment.quoteSent': { $ne: true },
+    status: { $ne: 'declined' },
+  };
+  if (type === 'x-rays') {
+    match['details.employees.services.id'] = 'x-ray';
+  }
+
+  const rows = await prodDb
+    .collection('appointments')
+    .find(match)
+    .project({ 'details.date': 1 })
+    .toArray();
+
+  const buckets: QuoteBacklogBuckets = { '0-3d': 0, '4-7d': 0, '8d+': 0 };
+  const now = moment();
+  for (const row of rows) {
+    const date = (row as { details?: { date?: string } }).details?.date;
+    if (!date) continue;
+    const daysAgo = now.diff(moment(date, DATE_FORMAT), 'days');
+    if (daysAgo <= 3) buckets['0-3d']++;
+    else if (daysAgo <= 7) buckets['4-7d']++;
+    else buckets['8d+']++;
+  }
+  return buckets;
+}
+
+async function getClinicComparison(
+  prodDb: Db,
+  type: 'all' | 'x-rays',
+  start: string,
+  end: string
+): Promise<ClinicComparison[]> {
+  const match = buildDateMatch(type, start, end);
+  const rows = await prodDb
+    .collection('appointments')
+    .aggregate<{ _id: string; appointments: number; amount: number; employeesCateredTo: number }>([
+      { $match: match },
+      {
+        $group: {
+          _id: '$details.clinic',
+          appointments: { $sum: 1 },
+          amount: { $sum: { $ifNull: ['$payment.amount', 0] } },
+          employeesCateredTo: { $sum: { $size: { $ifNull: ['$details.employees', []] } } },
+        },
+      },
+    ])
+    .toArray();
+
+  return rows
+    .filter((r) => r._id)
+    .map((r) => ({
+      clinic: r._id,
+      appointments: r.appointments,
+      amount: r.amount,
+      employeesCateredTo: r.employeesCateredTo,
+    }));
+}
+
+async function getTopCompanies(
+  prodDb: Db,
+  type: 'all' | 'x-rays',
+  start: string,
+  end: string,
+  limit: number
+): Promise<TopCompany[]> {
+  const match = buildDateMatch(type, start, end);
+  const rows = await prodDb
+    .collection('appointments')
+    .aggregate<{ _id: string; appointments: number; amount: number }>([
+      { $match: match },
+      {
+        $group: {
+          _id: '$details.company.name',
+          appointments: { $sum: 1 },
+          amount: { $sum: { $ifNull: ['$payment.amount', 0] } },
+        },
+      },
+      { $sort: { appointments: -1 } },
+      { $limit: limit },
+    ])
+    .toArray();
+
+  return rows.filter((r) => r._id).map((r) => ({ name: r._id, appointments: r.appointments, amount: r.amount }));
+}
+
+async function getStatusBreakdown(
+  prodDb: Db,
+  type: 'all' | 'x-rays',
+  start: string,
+  end: string
+): Promise<StatusBreakdown> {
+  const match = buildDateMatch(type, start, end);
+  const rows = await prodDb
+    .collection('appointments')
+    .aggregate<{ _id: string; count: number }>([
+      { $match: match },
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+    ])
+    .toArray();
+
+  const breakdown: StatusBreakdown = { pending: 0, approved: 0, declined: 0 };
+  for (const row of rows) {
+    if (row._id === 'pending' || row._id === 'approved' || row._id === 'declined') {
+      breakdown[row._id] = row.count;
+    }
+  }
+  return breakdown;
+}
+
 export async function getDashboardStats(prodDb: Db, type: 'all' | 'x-rays') {
   const today = moment().format(DATE_FORMAT);
   const yesterday = moment().subtract(1, 'days').format(DATE_FORMAT);
@@ -346,15 +524,31 @@ export async function getDashboardStats(prodDb: Db, type: 'all' | 'x-rays') {
   const twoMonthsAgoStart = moment().subtract(2, 'month').startOf('month').format(DATE_FORMAT);
   const twoMonthsAgoEnd = moment().subtract(2, 'month').endOf('month').format(DATE_FORMAT);
 
-  const [todayStats, yesterdayStats, thisMonthStats, lastMonthStats, latestAppointments, latestMessages] =
-    await Promise.all([
-      getPeriodStats(prodDb, type, today, yesterday),
-      getPeriodStats(prodDb, type, yesterday, twoDaysAgo),
-      getRangeStats(prodDb, type, thisMonthStart, thisMonthEnd, lastMonthStart, lastMonthEnd),
-      getRangeStats(prodDb, type, lastMonthStart, lastMonthEnd, twoMonthsAgoStart, twoMonthsAgoEnd),
-      getLatestAppointments(prodDb, type),
-      getLatestMessages(prodDb, type),
-    ]);
+  const [
+    todayStats,
+    yesterdayStats,
+    thisMonthStats,
+    lastMonthStats,
+    latestAppointments,
+    latestMessages,
+    revenueTrend,
+    quoteBacklog,
+    clinicComparison,
+    topCompanies,
+    statusBreakdown,
+  ] = await Promise.all([
+    getPeriodStats(prodDb, type, today, yesterday),
+    getPeriodStats(prodDb, type, yesterday, twoDaysAgo),
+    getRangeStats(prodDb, type, thisMonthStart, thisMonthEnd, lastMonthStart, lastMonthEnd),
+    getRangeStats(prodDb, type, lastMonthStart, lastMonthEnd, twoMonthsAgoStart, twoMonthsAgoEnd),
+    getLatestAppointments(prodDb, type),
+    getLatestMessages(prodDb, type),
+    getRevenueTrend(prodDb, type, 30),
+    getQuoteBacklogAging(prodDb, type),
+    getClinicComparison(prodDb, type, thisMonthStart, thisMonthEnd),
+    getTopCompanies(prodDb, type, thisMonthStart, thisMonthEnd, 5),
+    getStatusBreakdown(prodDb, type, thisMonthStart, thisMonthEnd),
+  ]);
 
   const toTitledList = (stats: PeriodStats) => {
     const titleCase = (key: string) => key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
@@ -373,5 +567,12 @@ export async function getDashboardStats(prodDb: Db, type: 'all' | 'x-rays') {
     },
     latestAppointments,
     latestMessages,
+    insights: {
+      revenueTrend,
+      quoteBacklog,
+      clinicComparison,
+      topCompanies,
+      statusBreakdown,
+    },
   };
 }
