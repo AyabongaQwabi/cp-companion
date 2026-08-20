@@ -86,7 +86,7 @@
     "description": "Track medical and service expiry status per employee so repeat bookings are easier to plan.",
     "helpers": {
       "filters": "Filter by status or company to focus on the employees that need action first.",
-      "table": "Draft data means the expiry rule is not confirmed yet; treat those rows as planning signals, not final compliance decisions."
+      "table": ""
     }
   },
   "insights": {

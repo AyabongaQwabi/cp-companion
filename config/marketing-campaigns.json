@@ -8,7 +8,7 @@
       "logoUrl": "https://cpc.qwbi.lat/_next/image?url=%2Flogo-wide.png&w=2048&q=75",
       "firstLoginBonusCredits": 100,
       "fallbackSignupBonusCredits": 50,
-      "maxEmailsPerRun": 50,
+      "maxEmailsPerRun": 200,
       "segment": {
         "role": "client",
         "excludeEmailWords": ["tecla", "clinic"]

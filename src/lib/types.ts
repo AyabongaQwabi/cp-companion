@@ -339,3 +339,123 @@ export interface ClinicPlusUserDocument {
   appointmentsManaging?: string[];
   tracking?: { type: string; date: Date; entityId: string; doer: string }[];
 }
+
+// --- Section 0 (production-sync/enrichment pipeline) collections, all cp_companion-only ---
+// Every collection below is written exclusively by the hourly sync job (src/lib/sync/*) and
+// read-only everywhere else. None of these are ever written from a user-facing request path.
+
+// cp_companion.syncLog — one row per pipeline run, across all sub-jobs in that run.
+export interface SyncLogEntry {
+  _id?: string;
+  runId: string;
+  startedAt: Date;
+  finishedAt?: Date;
+  status: 'running' | 'success' | 'partial' | 'failed';
+  jobs: {
+    name: string;
+    processed: number;
+    errors: number;
+    durationMs: number;
+  }[];
+  error?: string;
+}
+
+// cp_companion.companyProfiles — one row per production.companies document, derived aggregates
+// only. peerCohortKey is the input to section 1's benchmarking (employee-count band + dominant
+// service type) — never exposed raw to any client, only used server-side to group cohorts.
+export interface CompanyProfile {
+  _id?: string;
+  companyId: string; // production.companies.id
+  companyName: string;
+  totalHistoricalSpend: number;
+  employeeCountTrend: { date: string; count: number }[]; // YYYY-MM, snapshotted per sync run
+  currentEmployeeCount: number;
+  dominantClinic: string | null;
+  dominantServiceType: string | null;
+  avgBookingIntervalDays: number | null;
+  peerCohortKey: string; // e.g. "11-50|medical-fitness"
+  firstSeenAt: Date;
+  lastActiveAt: Date | null;
+  lastSyncedAt: Date;
+}
+
+// cp_companion.bookingPatterns — per-company booking-cadence mining, feeds both a company's own
+// Insights page and (aggregated across a cohort) section 1's cross-company benchmarks.
+export interface BookingPattern {
+  _id?: string;
+  companyId: string;
+  avgDaysBetweenBookings: number | null;
+  seasonalMonthCounts: Record<string, number>; // "01".."12" -> appointment count, all-time
+  avgEmployeesPerBooking: number | null;
+  serviceMix: Record<string, number>; // serviceId -> count across all bookings
+  lastSyncedAt: Date;
+}
+
+// cp_companion.complianceStatusCache — precomputed per-employee expiry status, mirroring
+// computeRosterCompliance's ComplianceStatus shape so dashboards can read this instead of
+// recomputing live. Keyed by rosterEmployeeId + serviceId, same identity as ComplianceAlertSent.
+export interface ComplianceStatusCache {
+  _id?: string;
+  rosterEmployeeId: string;
+  userId: string;
+  serviceId: string;
+  status: 'valid' | 'expiring-soon' | 'expired';
+  expiryDate: string | null;
+  isDraft: boolean;
+  lastSyncedAt: Date;
+}
+
+// cp_companion.dataQualitySweep — platform-wide name-variant/ID-checksum flags, superadmin-only.
+export interface DataQualityFlag {
+  _id?: string;
+  companyId: string;
+  rosterEmployeeId?: string;
+  flagType: 'name-variant' | 'id-checksum';
+  detail: string;
+  lastSyncedAt: Date;
+}
+
+// cp_companion.dormancyFlags — companies quiet relative to their own historical cadence.
+// Superadmin-only outreach list, never surfaced to the client themselves.
+export interface DormancyFlag {
+  _id?: string;
+  companyId: string;
+  companyName: string;
+  avgBookingIntervalDays: number;
+  daysSinceLastBooking: number;
+  lastBookingDate: string | null;
+  flaggedAt: Date;
+}
+
+// cp_companion.newCompanyLeads — production.companies documents the sync job first saw this run.
+// Superadmin-only running list of ClinicPlus companies not yet on Companion.
+export interface NewCompanyLead {
+  _id?: string;
+  companyId: string;
+  companyName: string;
+  firstSeenAt: Date;
+  isOnCompanion: boolean; // true once any production.users linked to this company has a companionUsers row
+}
+
+// cp_companion.anomalyFlags — production.appointments whose stored payment.amount doesn't match
+// what calculateBookingPrice() recomputes from the same document's employees/dover/xray. Internal
+// correctness check, superadmin-only, never client-facing.
+export interface AnomalyFlag {
+  _id?: string;
+  appointmentId: string;
+  companyId: string | null;
+  storedAmount: number;
+  recomputedAmount: number;
+  difference: number;
+  flaggedAt: Date;
+}
+
+// cp_companion.adoptionMetrics — one row per sync run, platform-wide Companion-vs-direct
+// appointment volume split. Superadmin-only headline metric.
+export interface AdoptionMetric {
+  _id?: string;
+  computedAt: Date;
+  totalAppointments: number;
+  companionCreatedAppointments: number;
+  adoptionRate: number; // companionCreatedAppointments / totalAppointments
+}
