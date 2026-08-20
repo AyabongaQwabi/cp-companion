@@ -96,6 +96,13 @@
         "changeFrequency": "monthly"
       },
       {
+        "path": "/estimate",
+        "title": "Cost Estimator",
+        "description": "Estimate the cost of occupational health medicals for your workforce using ClinicPlus's real, current prices. No account needed.",
+        "priority": 0.7,
+        "changeFrequency": "monthly"
+      },
+      {
         "path": "/solutions",
         "title": "Solutions",
         "description": "ClinicPlus Companion workflows for industrial employers, multi-site teams, and health officers.",

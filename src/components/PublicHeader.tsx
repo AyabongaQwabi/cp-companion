@@ -29,6 +29,9 @@ export default function PublicHeader() {
         <Link href="/resources" className="text-gray-700 hover:text-gray-900 transition-colors">
           Resources
         </Link>
+        <Link href="/estimate" className="text-gray-700 hover:text-gray-900 transition-colors">
+          Estimate cost
+        </Link>
         <Link
           href="/login"
           className="inline-flex items-center justify-center rounded-pill border border-gold-400/40 bg-gradient-to-b from-red-500 to-red-600 px-4 py-2 font-medium text-white shadow-md shadow-red-500/15 transition-[transform,box-shadow] duration-150 hover:scale-[1.02] hover:shadow-premium active:scale-[0.99] motion-reduce:transition-none motion-reduce:hover:scale-100"
