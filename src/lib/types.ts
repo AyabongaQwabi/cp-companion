@@ -583,3 +583,82 @@ export interface AppointmentInternalNote {
   authorAdminName: string;
   createdAt: Date;
 }
+
+// --- New centralized audit-event system (cp_companion.audit_events) ---
+// This is deliberately a SEPARATE system from cp_companion.auditLog (camelCase collection, ~15
+// ad hoc write sites across appointments/companies/profile routes — see audit-log/route.ts) and
+// from production.appointments[].tracking / production.companies[].tracking (written only by the
+// legacy clinicplus-server-latest-stable-version Express/Socket.IO server, never by this repo).
+// None of those are touched, removed, or renamed by this addition — audit-log/route.ts keeps
+// merging them exactly as before. audit_events (snake_case, on purpose, to stay visually distinct
+// from auditLog) is meant to eventually be the one place all audit-worthy activity — new writes
+// from this app, cp-redesign, cp-redesign-admin, AND a backfilled/re-synced copy of the legacy
+// .tracking data (see scripts/backfill-audit-events.mjs and src/lib/audit-legacy-sync.ts) — lives
+// together, so a single entity or actor timeline can be read from one collection.
+//
+// entityType is intentionally limited to the three production entities that have a real
+// create/update/delete-style lifecycle and existing .tracking precedent (appointment, company,
+// user). Other collections in this file (RosterEmployee, EmployeeGroup, CreditTransaction, etc.)
+// are cp_companion-only, already have their own audit trail shape (e.g. CreditTransaction), or
+// don't have an equivalent lifecycle — extend this union later only once a concrete need shows up
+// rather than speculatively now.
+export type AuditEntityType = 'appointment' | 'user' | 'company';
+
+// actorType 'system' covers events with no human actor (e.g. cron-driven state changes, or
+// legacy-import rows where the original tracking entry had no doer). actorId/actorName are
+// nullable for exactly that case.
+export type AuditActorType = 'user' | 'admin' | 'system';
+
+// Free-form string, not a strict union, so a new call site can log a new action without a type
+// change here — but the expected vocabulary is documented so consumers (e.g. cp-redesign-admin's
+// timeline UI) can build a stable icon/label map instead of falling back to a raw string for
+// everything. This list is a superset of the real legacy .tracking `type` values (left column)
+// plus the richer action vocabulary the new system adds (right column) — legacy values are passed
+// through into `action` completely unchanged during import, never renamed/mapped, so the same
+// action string always means the same thing whether it came from today's write or a 2019 import:
+//   Legacy (.tracking type, passed through as-is):      New (used by cp-companion/cp-redesign/-admin):
+//   USER_SIGNUP                                          created
+//   CREATED                                              updated
+//   ADD_NEW_APPOINTMENT_TO_MANAGE                         field_changed
+//   ADD_NEW_COMPANY_TO_MANAGE                             status_changed
+//   ADD_NEW_MANAGER                                       approved
+//   REMOVE_APPOINTMENT_FROM_MANAGER                       declined
+//   REMOVE_COMPANY_FROM_MANAGER                            cancelled
+//   REMOVE_MANAGER                                        deleted
+//                                                          message_sent
+//                                                          login
+//                                                          manager_added
+//                                                          manager_removed
+export type AuditAction = string;
+
+// cp_companion.audit_events. id is a crypto.randomUUID() string (matches the id-generation
+// pattern used elsewhere in this codebase, e.g. src/lib/yoco.ts's transaction ids and the
+// `GEN-${crypto.randomUUID()}` idNumber fallback in employees/import routes) — NOT the Mongo
+// _id, so callers/consumers can reference a stable id without depending on ObjectId serialization
+// (the same rationale as RosterEmployee's string _id comment above).
+//
+// changes: documented shape is an array of per-field diffs, `{ field, before, after }[]` — chosen
+// over a single `{ before, after }` object because most real edits here (status changes, field
+// edits) touch one or two fields, and an array lets a timeline UI render "status: pending →
+// approved" per line without re-diffing two arbitrary objects. Optional — omitted for events with
+// no meaningful diff (e.g. created, message_sent, login).
+//
+// metadata: free-form, action-specific extra context (e.g. companyId for an appointment event so
+// GET /api/audit/events can filter by company without a schema change — see route comments;
+// or the legacy tracking entry's own `entityId` field for legacy-import rows, since in legacy
+// company/appointment tracking that field sometimes names a *different* related entity, e.g. the
+// user being added as a manager, which must never collide with this document's own top-level
+// entityId).
+export interface AuditEvent {
+  id: string;
+  entityType: AuditEntityType;
+  entityId: string; // the primary entity's own id (appointment.id / company.id / user.id) — never a related entity's id, see metadata above for that case
+  action: AuditAction;
+  actorType: AuditActorType;
+  actorId: string | null;
+  actorName: string | null;
+  changes?: { field: string; before: unknown; after: unknown }[];
+  metadata?: Record<string, unknown>;
+  source: 'cp-redesign' | 'cp-redesign-admin' | 'legacy-import' | 'system';
+  createdAt: Date;
+}
