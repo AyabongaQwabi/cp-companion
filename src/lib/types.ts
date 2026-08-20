@@ -684,7 +684,7 @@ export interface AppointmentInternalNote {
 // are cp_companion-only, already have their own audit trail shape (e.g. CreditTransaction), or
 // don't have an equivalent lifecycle — extend this union later only once a concrete need shows up
 // rather than speculatively now.
-export type AuditEntityType = 'appointment' | 'user' | 'company';
+export type AuditEntityType = 'appointment' | 'user' | 'company' | 'platform_control' | 'support_ticket';
 
 // actorType 'system' covers events with no human actor (e.g. cron-driven state changes, or
 // legacy-import rows where the original tracking entry had no doer). actorId/actorName are
