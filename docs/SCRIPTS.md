@@ -58,6 +58,10 @@ ticks never produces duplicate or conflicting data.
 |---|---|
 | `npm run marketing:campaign` | Runs a lifecycle marketing email campaign (`config/marketing-campaigns.json`) — dry-run by default; see the script's own `argv` handling for real-send usage. |
 | `npm run marketing:test-email` | Sends a single test email for the default campaign (`clinicplus-companion-client-invite`) without touching real recipient enrollment state. |
+| `npm run marketing:admin-companion:dry-run` | Lists everyone eligible for the ClinicPlus Admin Companion introduction: all `admin` users and `client` users whose email contains `clinic`. No emails are sent. |
+| `npm run marketing:admin-companion:test-email` | Sends the Admin Companion introduction as a test email to `aya@qwabi.co.za` without enrolling recipients. |
+| `npm run marketing:admin-companion:enroll` | Enrolls the Admin Companion introduction recipients into `emailCampaignInvites`. Does not send email by itself. |
+| `npm run marketing:admin-companion:send-due` | Sends the due Admin Companion introduction emails. Live sends CC `aya@qwabi.co.za`, excluding duplicate CC when Aya is the direct recipient. |
 
 ## Adding a new script
 

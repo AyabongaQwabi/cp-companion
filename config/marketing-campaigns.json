@@ -80,6 +80,63 @@
           "footNote": "This is the final email in this introduction sequence. If Bookings Companion is not relevant to you, no action is needed."
         }
       ]
+    },
+    {
+      "id": "clinicplus-admin-companion-introduction",
+      "name": "ClinicPlus Admin Companion introduction",
+      "enabled": true,
+      "baseUrl": "https://cpc.qwbi.lat",
+      "logoUrl": "https://cpac.qwbi.lat/admin-companion-logo2.png",
+      "logoAlt": "ClinicPlus Admin Companion",
+      "emailBadge": "Introducing ClinicPlus Admin Companion",
+      "firstLoginBonusCredits": 0,
+      "fallbackSignupBonusCredits": 0,
+      "maxEmailsPerRun": 200,
+      "cc": ["aya@qwabi.co.za"],
+      "segment": {
+        "anyOf": [
+          { "role": "admin" },
+          { "role": "client", "includeEmailWords": ["clinic"] }
+        ],
+        "excludeEmailWords": []
+      },
+      "sequence": [
+        {
+          "step": 0,
+          "delayDays": 0,
+          "subject": "Introducing ClinicPlus Admin Companion",
+          "preview": "A professional operations and business-intelligence platform for ClinicPlus administration teams.",
+          "headline": "Introducing ClinicPlus Admin Companion",
+          "eyebrow": "ClinicPlus administration platform",
+          "intro": "I’m Ayabonga Qwabi from Qwabi Engineering and Namoota Technologies Pty Ltd. We work closely with ClinicPlus to design and develop the digital platforms supporting its operations, including the recently upgraded ClinicPlus Admin Platform, version 3.1.",
+          "body": [
+            "Earlier this week, we introduced ClinicPlus Booking Companion, a web application that helps ClinicPlus power users create, manage, store, and reuse employee, company, appointment, and booking information more efficiently.",
+            "Today, I’m pleased to introduce a new platform built specifically for ClinicPlus administration teams: ClinicPlus Admin Companion.",
+            "ClinicPlus Admin Companion is a premium operations and business-intelligence platform that gives administrators a clearer view of their customers, team activity, operational performance, and overall use of the ClinicPlus ecosystem.",
+            "The objective is simple: to help ClinicPlus administrators understand what is happening across their operations, identify areas requiring attention, and make better-informed decisions.",
+            "As an introductory offer, your first month is free. Thereafter, the Standard plan is available for R299 per user per month.",
+            "We built this platform for professional admin teams seeking stronger customer relationships, better operational visibility, and greater control over their day-to-day work."
+          ],
+          "bullets": [
+            "Customer relationship management and communication tools",
+            "Bulk email campaigns for marketing and transactional communication",
+            "Signup, login, and user-engagement intelligence",
+            "Usage analytics across users, devices, locations, and activity patterns",
+            "Appointment, company, and customer lifecycle insights",
+            "Financial and subscription visibility",
+            "Data-quality monitoring",
+            "Support-ticket management",
+            "Controls supporting platform safety and availability",
+            "Admin activity analytics for improving workflows and team performance"
+          ],
+          "cta": "Open ClinicPlus Admin Companion",
+          "ctaUrl": "https://cpac.qwbi.lat/",
+          "loginNote": "Your first month is free. Standard access renews at R299 per user per month after the introductory period.",
+          "signoff": "Ayabonga Qwabi",
+          "footer": "You are receiving this because this email address is linked to a ClinicPlus administration account or a ClinicPlus-related client contact. ClinicPlus Admin Companion is built by Qwabi Engineering and Namoota Technologies Pty Ltd as a professional admin operations platform for ClinicPlus teams.",
+          "footNote": "ClinicPlus Admin Companion is designed for administration teams that need stronger customer relationships, better operational visibility, and greater control over daily work."
+        }
+      ]
     }
   ]
 }

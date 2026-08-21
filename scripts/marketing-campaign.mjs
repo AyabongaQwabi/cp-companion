@@ -31,8 +31,9 @@ const positional = process.argv.slice(2).filter((_, i) => {
   return realIndex !== stepFlagIndex && realIndex !== stepFlagIndex + 1;
 });
 
-const [command = 'dry-run', firstArg = 'clinicplus-companion-client-invite', secondArg] = positional;
-const campaignId = command === 'test-send' ? 'clinicplus-companion-client-invite' : firstArg;
+const [command = 'dry-run', rawFirstArg, secondArg, thirdArg] = positional;
+const firstArg = rawFirstArg ?? (command === 'test-send' ? 'aya@qwabi.co.za' : 'clinicplus-companion-client-invite');
+const campaignId = command === 'test-send' ? thirdArg || 'clinicplus-companion-client-invite' : firstArg;
 log(`Parsed command: ${command}, campaignId: ${campaignId}${stepFilter !== null ? `, step filter: ${stepFilter}` : ''}`);
 
 let envVarsLoaded = 0;
@@ -53,12 +54,30 @@ if (!campaign || !campaign.enabled) {
 log(`Loaded campaign "${campaign.name}" (${campaign.id}) — ${campaign.sequence.length} sequence steps, maxEmailsPerRun ${campaign.maxEmailsPerRun}`);
 
 function eligibleUserFilter() {
-  const excluded = campaign.segment.excludeEmailWords
+  const excluded = (campaign.segment.excludeEmailWords || [])
     .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|');
+  const emailFilter = { $type: 'string', ...(excluded ? { $not: new RegExp(excluded, 'i') } : {}) };
+
+  if (Array.isArray(campaign.segment.anyOf) && campaign.segment.anyOf.length) {
+    return {
+      'details.email': emailFilter,
+      $or: campaign.segment.anyOf.map((segment) => {
+        const filter = { role: segment.role };
+        if (Array.isArray(segment.includeEmailWords) && segment.includeEmailWords.length) {
+          const included = segment.includeEmailWords
+            .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('|');
+          filter['details.email'] = { $regex: new RegExp(included, 'i') };
+        }
+        return filter;
+      }),
+    };
+  }
+
   return {
     role: campaign.segment.role,
-    'details.email': { $type: 'string', $not: new RegExp(excluded, 'i') },
+    'details.email': emailFilter,
   };
 }
 
@@ -89,8 +108,19 @@ function unsubscribeUrl(token) {
 
 function emailHtml(invite, email, options = {}) {
   const firstName = escapeHtml(invite.userName.split(' ')[0] || invite.userName);
-  const ctaUrl = options.testMode ? testInviteUrl() : inviteUrl(invite.token);
+  const ctaUrl = email.ctaUrl || (options.testMode ? testInviteUrl() : inviteUrl(invite.token));
   const optOutUrl = options.testMode ? `${campaign.baseUrl.replace(/\/$/, '')}/login` : unsubscribeUrl(invite.token);
+  const highlightBadge = campaign.emailBadge || 'New: ClinicPlus Booking Companion';
+  const logoAlt = campaign.logoAlt || 'ClinicPlus Booking Companion';
+  const loginNote =
+    email.loginNote ||
+    'Use your existing ClinicPlus login. The 100-credit invite bonus is applied on first login when you enter through this email button.';
+  const signoff = email.signoff || 'The ClinicPlus Booking Companion Team';
+  const footer =
+    email.footer ||
+    `ClinicPlus Booking Companion is a standalone product built and operated by
+                  Namoota Technology (Pty) Ltd for ClinicPlus clients. It is not required to use
+                  ClinicPlus and does not replace the ClinicPlus bookings website.`;
   const body = email.body
     .map((paragraph) => `<p style="margin:0 0 16px;color:#3f3a33;line-height:1.7;font-size:15px;">${escapeHtml(paragraph)}</p>`)
     .join('');
@@ -119,13 +149,13 @@ function emailHtml(invite, email, options = {}) {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(20,16,8,0.06);border:1px solid #ece6d8;">
             <tr>
               <td style="padding:30px 32px 22px;text-align:center;background:#ffffff;border-bottom:1px solid #f0ead9;">
-                <img src="${campaign.logoUrl}" width="200" alt="ClinicPlus Booking Companion" style="display:inline-block;max-width:200px;width:60%;height:auto;" />
+                <img src="${campaign.logoUrl}" width="200" alt="${escapeHtml(logoAlt)}" style="display:inline-block;max-width:200px;width:60%;height:auto;" />
               </td>
             </tr>
             <tr>
               <td style="padding:8px 32px 0;text-align:center;">
                 <span style="display:inline-block;margin-top:20px;padding:6px 14px;border-radius:999px;background:#fbf3e0;border:1px solid #e9d6a3;color:#8a6a1f;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">
-                  New: ClinicPlus Booking Companion
+                  ${escapeHtml(highlightBadge)}
                 </span>
               </td>
             </tr>
@@ -153,7 +183,7 @@ function emailHtml(invite, email, options = {}) {
                   </tr>
                 </table>
                 <p style="margin:4px 0 4px;color:#8a857a;font-size:12.5px;line-height:1.6;text-align:center;">
-                  Use your existing ClinicPlus login. The 100-credit invite bonus is applied on first login when you enter through this email button.
+                  ${escapeHtml(loginNote)}
                 </p>
               </td>
             </tr>
@@ -161,16 +191,14 @@ function emailHtml(invite, email, options = {}) {
               <td style="padding:26px 32px 30px;">
                 <p style="margin:0 0 4px;color:#4a453c;font-size:13.5px;line-height:1.6;">
                   Thanks,<br />
-                  <strong style="color:#1c1a16;">The ClinicPlus Booking Companion Team</strong>
+                  <strong style="color:#1c1a16;">${escapeHtml(signoff)}</strong>
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding:18px 32px 26px;background:#faf8f3;border-top:1px solid #f0ead9;">
                 <p style="margin:0 0 6px;color:#8a857a;font-size:11.5px;line-height:1.6;">
-                  ClinicPlus Booking Companion is a standalone product built and operated by
-                  Namoota Technology (Pty) Ltd for ClinicPlus clients. It is not required to use
-                  ClinicPlus and does not replace the ClinicPlus bookings website.
+                  ${footer}
                 </p>
                 <p style="margin:0;color:#a49f92;font-size:11.5px;line-height:1.6;">
                   Prefer not to receive this invite sequence?
@@ -218,6 +246,13 @@ async function sendEmail(invite, email, options = {}) {
   }
   const subject = options.testMode ? `[TEST] ${email.subject}` : email.subject;
   const customId = `${campaign.name}:${options.testMode ? 'Test' : email.step}`;
+  const recipientEmail = String(invite.userEmail || '').toLowerCase();
+  const cc = Array.isArray(campaign.cc)
+    ? campaign.cc
+        .map((address) => String(address || '').trim())
+        .filter((address) => address && address.toLowerCase() !== recipientEmail)
+        .map((address) => ({ Email: address, Name: address }))
+    : [];
   log(`Sending email to ${invite.userName} <${invite.userEmail}> — step ${email.step}: "${subject}"`);
   const mailjet = Mailjet.apiConnect(apiKey, apiSecret);
   const start = Date.now();
@@ -227,6 +262,7 @@ async function sendEmail(invite, email, options = {}) {
         {
           From: { Email: contactConfig.supportEmail, Name: contactConfig.senderName },
           To: [{ Email: invite.userEmail, Name: invite.userName }],
+          ...(cc.length ? { Cc: cc } : {}),
           Subject: subject,
           TextPart: email.preview,
           HTMLPart: emailHtml(invite, email, options),
@@ -273,7 +309,7 @@ try {
   } else if (command === 'test-send') {
     const testEmail = firstArg || 'aya@qwabi.co.za';
     const step = Number(secondArg ?? 0);
-    log(`Running test-send to ${testEmail}, step ${step}`);
+    log(`Running test-send to ${testEmail}, step ${step}, campaign ${campaignId}`);
     const email = campaign.sequence.find((item) => item.step === step);
     if (!email) {
       log(`ERROR: no campaign email found for step ${step} (known steps: ${campaign.sequence.map((s) => s.step).join(', ')})`);
