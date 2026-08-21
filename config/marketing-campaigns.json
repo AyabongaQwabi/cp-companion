@@ -2,12 +2,12 @@
   "campaigns": [
     {
       "id": "clinicplus-companion-client-invite",
-      "name": "ClinicPlus Booking Companion client invitation",
+      "name": "ClinicPlus Bookings Companion client introduction",
       "enabled": true,
       "baseUrl": "https://cpc.qwbi.lat",
       "logoUrl": "https://cpc.qwbi.lat/_next/image?url=%2Flogo-wide.png&w=2048&q=75",
-      "firstLoginBonusCredits": 200,
-      "fallbackSignupBonusCredits": 100,
+      "firstLoginBonusCredits": 300,
+      "fallbackSignupBonusCredits": 300,
       "maxEmailsPerRun": 200,
       "segment": {
         "role": "client",
@@ -17,67 +17,67 @@
         {
           "step": 0,
           "delayDays": 0,
-          "subject": "Stop retyping the same 100 employees every booking",
-          "preview": "There's a faster way to book ClinicPlus medicals — and it's not on the ClinicPlus website. 100 free credits inside.",
-          "headline": "You've typed this employee list before. Probably a dozen times.",
-          "eyebrow": "New: ClinicPlus Booking Companion",
-          "intro": "Same names. Same ID numbers. Same occupations. Every single booking, from scratch, on the ClinicPlus website — because there's never been anywhere else to save them. Until now.",
+          "subject": "Introducing Bookings Companion",
+          "preview": "An official introduction to ClinicPlus Bookings Companion, an optional tool for existing ClinicPlus clients.",
+          "headline": "Introducing ClinicPlus Bookings Companion",
+          "eyebrow": "Official ClinicPlus client invitation",
+          "intro": "We're introducing ClinicPlus Bookings Companion, an optional booking support tool for existing ClinicPlus clients who manage repeat employee medical bookings.",
           "body": [
-            "ClinicPlus Booking Companion is a new, standalone tool built by Namoota Technology that sits on top of your ClinicPlus account. Save your employees once. Group them by site, shift, or occupation. Then book a whole crew for their medicals in the time it used to take to find one person's ID number.",
-            "It's not a free app — it's a credit-based power tool for teams who book often enough that the retyping has become a real, recurring cost of your week. So instead of asking you to trust a demo video, we're handing you 100 free credits to go try it on your own account, right now."
+            "Bookings Companion works with your existing ClinicPlus login. It helps you keep a reusable employee roster, organise people by site, shift, occupation, or group, and prepare bulk medical bookings without retyping the same details each time.",
+            "This introduction includes 300 trial credits so you can explore the tool on your own account before deciding whether it is useful for your team. ClinicPlus bookings can still be made directly through the usual ClinicPlus website at any time."
           ],
           "bullets": [
-            "Import your people straight from past ClinicPlus appointments — zero manual retyping",
-            "Group by crew, site, or occupation, then book the whole group in a few clicks",
-            "Book one employee, a whole company, or everyone in an occupation — same effort either way",
-            "Every appointment lands in ClinicPlus exactly like one you booked directly — nothing changes on their end"
+            "Use your existing ClinicPlus account details to log in",
+            "Import employees from previous ClinicPlus appointments where available",
+            "Save roster details once, then reuse them for future bookings",
+            "Submit appointments into ClinicPlus through the same booking system your team already uses"
           ],
-          "cta": "Claim My 100 Free Credits",
-          "footNote": "Companion never replaces the ClinicPlus bookings website — you can still book there directly, any time, with or without it. These 100 credits are a one-time trial, not an ongoing free tier, and every action shows its price before you confirm it."
+          "cta": "Open Bookings Companion",
+          "footNote": "You are receiving this because this email address is listed as a ClinicPlus client booking contact. Bookings Companion is optional, and every credit-based action shows its cost before you confirm it."
         },
         {
           "step": 1,
           "delayDays": 2,
-          "subject": "What 5 minutes with Companion actually looks like",
-          "preview": "Here's the exact flow: import, group, select, submit. No re-typing, no lost ID numbers, no starting from a blank form.",
-          "headline": "Here's what changes the moment your roster exists",
-          "eyebrow": "How it actually works",
-          "intro": "Picture your next bulk booking. Twenty-two names for exit medicals, due by Friday. Here's that booking with Companion instead of a blank ClinicPlus form.",
+          "subject": "A closer look at Bookings Companion",
+          "preview": "How the optional ClinicPlus Bookings Companion roster and bulk-booking tools work.",
+          "headline": "A simpler way to prepare repeat bookings",
+          "eyebrow": "ClinicPlus Bookings Companion",
+          "intro": "If your team often books the same employees for occupational medicals, Bookings Companion is designed to reduce the admin before the appointment is submitted.",
           "body": [
-            "You open Companion, pull up the \"Exit Medical\" group you built once, and every one of those twenty-two people is already there — name, ID number, occupation, job spec file, all attached from the last time you booked them. You tick the group, confirm the service, and submit. One appointment, twenty-two people, a few minutes, not an afternoon.",
-            "That's the whole shift: from re-entering the same data every time, to spending thirty seconds picking who's going in. Everything else — job specs, compliance expiry dates, what you've spent this month — lives in one place instead of scattered across old emails and spreadsheets."
+            "You can build a roster once, keep employee details in one place, and group employees in a way that matches how your organisation works. When the next booking is due, you select the relevant people, confirm the service and clinic date, and submit the appointment.",
+            "The aim is practical: fewer repeated forms, fewer missed ID numbers or job spec files, and a clearer view of what has already been booked."
           ],
           "bullets": [
-            "Roster: save every employee once — ID/passport, occupation, sites, job spec file, done",
-            "Groups: crews, shifts, departments, occupations — tick a group, not twenty-two checkboxes",
-            "Bulk booking: one company, one group, or one occupation, submitted as a single real ClinicPlus appointment",
-            "Compliance tracker: see who's expiring before it becomes an emergency booking, not after",
-            "Spend insights: what you've spent, on what, for which company — without digging through invoices",
-            "Multi-company: managing more than one client account? Switch between them from one login"
+            "Roster: save employee details, occupations, sites, and job spec files",
+            "Groups: organise employees by crew, department, shift, site, or occupation",
+            "Bulk booking: prepare one appointment for one employee or a full group",
+            "Compliance view: see upcoming medical expiries from your roster",
+            "Spend insights: review appointment spend by company and service",
+            "Multi-company access: switch between linked ClinicPlus companies from one login"
           ],
-          "cta": "Try It On My Own Roster",
-          "footNote": "Every action shows its credit cost before you confirm it — nothing runs automatically, and your 100 trial credits are still waiting to be used."
+          "cta": "View Bookings Companion",
+          "footNote": "Nothing runs automatically. You choose what to import, what to save, and what to submit. Your trial credits are available when you log in through this invitation."
         },
         {
           "step": 2,
           "delayDays": 5,
-          "subject": "Your 100 free credits expire with this invite",
-          "preview": "Set up your roster before the next urgent booking lands on your desk, not during it. Last email in this sequence.",
-          "headline": "Set this up before you need it, not while you're scrambling",
-          "eyebrow": "Final invitation reminder",
-          "intro": "The best time to build a roster is on a quiet afternoon. The worst time is when your phone rings with \"we need thirty people booked in by tomorrow.\" You know which one is coming first.",
+          "subject": "Reminder: your Bookings Companion introduction",
+          "preview": "A final reminder about the optional ClinicPlus Bookings Companion introduction.",
+          "headline": "Your Bookings Companion invite is still available",
+          "eyebrow": "ClinicPlus client reminder",
+          "intro": "This is a short final reminder about ClinicPlus Bookings Companion, the optional tool introduced to help existing ClinicPlus clients manage repeat employee medical bookings.",
           "body": [
-            "This is the last email in this sequence — after this, your invite goes quiet. Log in with the ClinicPlus account you already have, claim the 100 free credits, and import a handful of employees from your booking history. Ten minutes now, and the next urgent request lands on a roster instead of a blank page.",
-            "Nothing about your ClinicPlus account changes by trying it, and nothing locks you in — stop using Companion any time and keep booking directly through ClinicPlus exactly as before."
+            "If you would like to try it, log in with the ClinicPlus account you already use and explore the roster, grouping, compliance, and bulk-booking tools with the trial credits included in this invitation.",
+            "Trying Bookings Companion does not change your ClinicPlus account, and you can continue booking directly through ClinicPlus exactly as before."
           ],
           "bullets": [
-            "No new account — log in with what you already use for ClinicPlus",
-            "Import from booking history in minutes, not an afternoon of data entry",
-            "Every credit cost is visible before you confirm — no surprise charges",
-            "This invite isn't repeated — after this email, it's on you to come find us"
+            "No new account is required",
+            "Your existing ClinicPlus login is used",
+            "Trial credits are included for this introduction",
+            "Every credit cost is shown before you confirm an action"
           ],
-          "cta": "Use My Invite Before It's Gone",
-          "footNote": "This is the final email in this invitation sequence. If Companion isn't for you, no further action is needed and you won't be re-invited."
+          "cta": "Open My Invitation",
+          "footNote": "This is the final email in this introduction sequence. If Bookings Companion is not relevant to you, no action is needed."
         }
       ]
     }

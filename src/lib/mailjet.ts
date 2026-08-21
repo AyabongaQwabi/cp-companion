@@ -535,7 +535,7 @@ export async function sendMarketingCampaignEmail(params: {
               <tr>
                 <td style="padding:8px 32px 0;text-align:center;">
                   <span style="display:inline-block;margin-top:20px;padding:6px 14px;border-radius:999px;background:#fbf3e0;border:1px solid #e9d6a3;color:#8a6a1f;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">
-                    Credit-based power-user tool &middot; not a free app
+                    Official ClinicPlus client introduction
                   </span>
                 </td>
               </tr>
@@ -564,7 +564,7 @@ export async function sendMarketingCampaignEmail(params: {
                     </tr>
                   </table>
                   <p style="margin:4px 0 4px;color:#8a857a;font-size:12.5px;line-height:1.6;text-align:center;">
-                    Log in with your existing ClinicPlus account &mdash; Companion is optional and never replaces the ClinicPlus bookings website.
+                    Log in with your existing ClinicPlus account. Bookings Companion is optional and does not replace the ClinicPlus bookings website.
                   </p>
                   ${
                     params.email.footNote
@@ -584,9 +584,9 @@ export async function sendMarketingCampaignEmail(params: {
               <tr>
                 <td style="padding:18px 32px 26px;background:#faf8f3;border-top:1px solid #f0ead9;">
                   <p style="margin:0 0 6px;color:#8a857a;font-size:11.5px;line-height:1.6;">
-                    ClinicPlus Booking Companion is a standalone product built and operated by
-                    Namoota Technology (Pty) Ltd for ClinicPlus clients. It is not required to use
-                    ClinicPlus and does not replace the ClinicPlus bookings website.
+                    You received this because this email address is listed as a ClinicPlus client
+                    booking contact. ClinicPlus Bookings Companion is an optional tool for
+                    ClinicPlus clients, built and operated by Namoota Technology (Pty) Ltd.
                   </p>
                   <p style="margin:0;color:#a49f92;font-size:11.5px;line-height:1.6;">
                     Prefer not to receive this invite sequence?

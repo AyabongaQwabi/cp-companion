@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   logUserLoginEvent({
     userId: user.id,
     role: 'client',
-    source: 'cp-redesign',
+    source: 'cp-companion',
     userName: [user.details.name, user.details.surname].filter(Boolean).join(' '),
     email: user.details.email,
     companyIds: companies.map((company) => company.id),
