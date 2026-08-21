@@ -609,3 +609,37 @@ export async function sendMarketingCampaignEmail(params: {
     customId: `${params.campaignName}:${params.email.step}`,
   });
 }
+
+export async function sendAdminBulkEmail(params: {
+  to: EmailRecipient;
+  subject: string;
+  message: string;
+  purpose: 'marketing' | 'transactional';
+  senderName: string;
+  preview?: string;
+}) {
+  const paragraphs = params.message
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const badge = params.purpose === 'transactional' ? 'ClinicPlus notice' : 'ClinicPlus update';
+  const html = renderEmailShell({
+    subject: params.subject,
+    badge,
+    eyebrow: params.purpose === 'transactional' ? 'Transactional message' : 'Marketing message',
+    headline: params.subject,
+    greeting: `Hi ${params.to.Name || 'there'},`,
+    paragraphs: paragraphs.length ? paragraphs : [params.message],
+  }).replace(
+    'Thanks,<br />',
+    `Thanks,<br /><strong>${escapeHtml(params.senderName || 'ClinicPlus')}</strong><br />`
+  );
+
+  await sendMailjetEmail({
+    from: FROM,
+    to: [params.to],
+    subject: params.subject,
+    html,
+    customId: `admin-companion:${params.purpose}:${Date.now()}`,
+  });
+}

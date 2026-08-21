@@ -5,6 +5,15 @@ import { getProductionDb } from '@/lib/mongodb';
 
 const EDITABLE_DETAIL_FIELDS = ['name', 'surname', 'email', 'contactNumber', 'picture'] as const;
 
+function getNestedValue(source: unknown, path: string) {
+  return path.split('.').reduce<unknown>((value, key) => {
+    if (value && typeof value === 'object' && key in value) {
+      return (value as Record<string, unknown>)[key];
+    }
+    return undefined;
+  }, source);
+}
+
 export async function OPTIONS() {
   return adminStatsCorsPreflight();
 }
@@ -90,8 +99,8 @@ export async function PATCH(req: NextRequest) {
       source: 'cp-redesign-admin',
       changes: Object.keys(updates).map((path) => ({
         field: path,
-        before: path.split('.').reduce((value: any, key) => value?.[key], before),
-        after: path.split('.').reduce((value: any, key) => value?.[key], updated),
+        before: getNestedValue(before, path),
+        after: getNestedValue(updated, path),
       })),
     });
 

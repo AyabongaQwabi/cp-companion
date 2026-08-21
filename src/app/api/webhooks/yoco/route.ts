@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhookSignature } from '@/lib/yoco';
 import { calculateBonus, calculateTotalCredited } from '@/lib/credit-bonus';
-import { getCompanionDb } from '@/lib/mongodb';
+import { getAdminCompanionDb, getCompanionDb } from '@/lib/mongodb';
 import type { CreditTransaction, CreditWallet } from '@/lib/types';
 
 /**
@@ -46,6 +46,73 @@ export async function POST(req: NextRequest) {
   if (!pending) {
     // Either already processed (idempotent no-op) or an event we don't have a record for.
     return NextResponse.json({ ok: true });
+  }
+
+  if (pending.purpose === 'admin_subscription') {
+    const now = new Date();
+    const periodDays = typeof pending.periodDays === 'number' ? pending.periodDays : 30;
+    const adminDb = await getAdminCompanionDb();
+    const subscriptions = adminDb.collection('adminSubscriptions');
+    const existing = await subscriptions.findOne({ adminUserId: pending.adminUserId, plan: 'standard' });
+    const baseDate =
+      existing?.currentPeriodEndsAt && new Date(existing.currentPeriodEndsAt).getTime() > now.getTime()
+        ? new Date(existing.currentPeriodEndsAt)
+        : now;
+    const currentPeriodEndsAt = new Date(baseDate);
+    currentPeriodEndsAt.setDate(currentPeriodEndsAt.getDate() + periodDays);
+
+    await subscriptions.updateOne(
+      { adminUserId: pending.adminUserId, plan: 'standard' },
+      {
+        $set: {
+          adminUserId: pending.adminUserId,
+          email: pending.email,
+          name: pending.name,
+          plan: 'standard',
+          status: 'active',
+          priceCents: pending.priceCents ?? 29900,
+          priceDisplay: 'R299',
+          currency: 'ZAR',
+          billingProvider: 'yoco',
+          billingMode: 'manual_renewal',
+          seats: 1,
+          currentPeriodStartedAt: now,
+          currentPeriodEndsAt,
+          lastPaymentAt: now,
+          lastPaymentReference: reference,
+          updatedAt: now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+          trialStartedAt: now,
+          trialEndsAt: now,
+        },
+        $unset: { expiredAt: '' },
+      },
+      { upsert: true }
+    );
+
+    await adminDb.collection('adminPaymentEvents').insertOne({
+      adminUserId: pending.adminUserId,
+      email: pending.email,
+      name: pending.name,
+      reference,
+      checkoutId: pending.checkoutId,
+      chargeId: event.payload?.id,
+      type: 'payment.succeeded',
+      status: 'paid',
+      amountZAR: pending.priceZAR,
+      amountCents: pending.priceCents,
+      currency: pending.currency ?? 'ZAR',
+      plan: 'standard',
+      periodDays,
+      currentPeriodEndsAt,
+      rawPayload: event.payload,
+      createdAt: now,
+    });
+
+    await pendingCheckouts.deleteOne({ reference });
+    return NextResponse.json({ ok: true, subscriptionRenewed: true });
   }
 
   const bonus = calculateBonus(pending.credits);

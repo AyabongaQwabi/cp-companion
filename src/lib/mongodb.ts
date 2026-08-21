@@ -7,6 +7,7 @@ if (!uri) {
 
 const PRODUCTION_DB = process.env.SELECTED_DB || 'production';
 const COMPANION_DB = process.env.COMPANION_DB || 'cp_companion';
+const ADMIN_COMPANION_DB = process.env.ADMIN_COMPANION_DB || 'clinicplus_admin_companion';
 
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
@@ -31,6 +32,11 @@ export async function getProductionDb() {
 export async function getCompanionDb() {
   const client = await clientPromise;
   return client.db(COMPANION_DB);
+}
+
+export async function getAdminCompanionDb() {
+  const client = await clientPromise;
+  return client.db(ADMIN_COMPANION_DB);
 }
 
 export default clientPromise;

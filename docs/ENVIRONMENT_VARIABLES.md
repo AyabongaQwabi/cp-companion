@@ -14,6 +14,7 @@ commit real secrets).
 | `DATABASE_URL` | Yes | `src/lib/mongodb.ts`, all `scripts/*.mjs` | MongoDB connection string. Single cluster shared with `clinicplus-server-latest-stable-version`; this app connects to two logical databases on it (see below). |
 | `SELECTED_DB` | No (default `production`) | `src/lib/mongodb.ts` | Name of the production database — the one owned by `clinicplus-server-latest-stable-version` (`appointments`, `companies`, `users`, `deleted_appointments`, ...). Treated as read-mostly; the only writes this app makes into it are additive-only enrichment fields (e.g. the lifecycle-status job) and the appointment CRUD routes it owns. |
 | `COMPANION_DB` | No (default `cp_companion`) | `src/lib/mongodb.ts`, `scripts/marketing-campaign.mjs` | Name of this app's own database — every `cp_companion.*` collection (`syncLog`, `companyProfiles`, `employees`, `auditLog`, etc.) lives here. Fully owned by this app. |
+| `ADMIN_COMPANION_DB` | No (default `clinicplus_admin_companion`) | `src/lib/mongodb.ts`, `api/admin/admin-companion/billing/*`, `api/webhooks/yoco` | Separate Clinicplus Admin Companion database for admin subscriptions, Yoco payment events, and admin interaction analytics. |
 
 ## Cron authentication
 
@@ -25,7 +26,7 @@ schemes at all (Vercel Hobby plan caps native `vercel.json` crons at once/day).
 |---|---|---|---|
 | `CRON_SECRET` | Yes (prod) | Every native `vercel.json` cron route: `api/cron/lifecycle-status`, `api/cron/date-cleanup`, `api/cron/compliance-alerts`, `api/cron/process-account-deletions`, `api/cron/marketing-campaigns`; also `api/admin/email-campaigns/[id]` | Shared secret Vercel's own cron invoker sends as `Authorization: Bearer <value>` for anything scheduled via `vercel.json`'s `crons` array (daily or slower). If unset, these routes skip the auth check — fine for local dev, must be set in production. |
 | `CRON_SYNC_SECRET` | Yes (prod) | `api/cron/sync`, `api/cron/sync-audit-events` | Shared secret for routes triggered by the **external** scheduler (cron-job.org), not Vercel's native cron — used for anything that needs to run more often than once/day. Sent as a custom `x-cron-secret` header, not `Authorization: Bearer`, since cron-job.org's dashboard URL itself isn't secret. |
-| `ADMIN_STATS_SECRET` | Yes (prod) | `api/admin/dashboard-stats`, `api/admin/finance-analytics` | Shared secret for cross-origin calls from `cp-redesign-admin` (a separate deployment) into this app's read-only analytics endpoints. Not a cron secret — gates browser-initiated requests, hence the CORS handling alongside it (`src/lib/admin-stats-cors.ts`). |
+| `ADMIN_STATS_SECRET` | Yes (prod) | `api/admin/dashboard-stats`, `api/admin/finance-analytics`, `api/admin/admin-companion/billing/*` | Shared secret for cross-origin/server-to-server admin calls into this app's guarded endpoints. Not a cron secret — gates browser-initiated and dashboard-initiated requests, hence the CORS handling alongside it (`src/lib/admin-stats-cors.ts`). |
 
 **Adding a new cron route?** Reuse `CRON_SECRET` if it's a native `vercel.json` cron (daily or
 slower). Only reuse `CRON_SYNC_SECRET` if it's invoked by the external cron-job.org scheduler
