@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyLogin, companiesForUser } from '@/lib/auth';
 import { grantSignupBonusIfFirstLogin, getOrCreateWallet } from '@/lib/credits';
 import { seedMissingServiceValidityPeriods } from '@/lib/compliance';
+import { logUserLoginEvent } from '@/lib/usage-tracking';
 
 export async function POST(req: NextRequest) {
   const { email, password, inviteToken } = await req.json();
@@ -19,6 +20,18 @@ export async function POST(req: NextRequest) {
   await seedMissingServiceValidityPeriods();
   await grantSignupBonusIfFirstLogin(user.id, companies[0]?.id, inviteToken);
   const wallet = await getOrCreateWallet(user.id);
+  logUserLoginEvent({
+    userId: user.id,
+    role: 'client',
+    source: 'cp-redesign',
+    userName: [user.details.name, user.details.surname].filter(Boolean).join(' '),
+    email: user.details.email,
+    companyIds: companies.map((company) => company.id),
+    companyNames: companies.map((company) => company.name),
+    metadata: inviteToken ? { inviteTokenPresent: true } : undefined,
+  }).catch((error) => {
+    console.warn('[usage] failed to record Companion login', error);
+  });
 
   return NextResponse.json({
     id: user.id,
