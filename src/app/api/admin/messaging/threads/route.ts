@@ -83,6 +83,12 @@ export async function GET(req: NextRequest) {
       rows = rows.filter((r) => r.threadStatus === statusFilter);
     }
 
+    rows = rows.sort((a, b) => {
+      const aTime = new Date(a.lastMessage?.createdAt || a.date || 0).getTime();
+      const bTime = new Date(b.lastMessage?.createdAt || b.date || 0).getTime();
+      return bTime - aTime;
+    });
+
     const totalCount = rows.length;
     const pageRows = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
